@@ -95,7 +95,7 @@ class ShoppingCart {
                     <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
                 </div>
                 <div>
-                    <div style="font-size: 20px; font-weight: bold; color: #1e2845; margin-bottom: 10px;">
+                    <div style="font-size: 20px; font-weight: bold; color: #12142B; margin-bottom: 10px;">
                         ${(item.price * item.quantity).toLocaleString('ru-RU')} ₽
                     </div>
                     <button class="btn-remove" onclick="cart.removeItem('${item.id}')">🗑️</button>
@@ -169,7 +169,7 @@ class HeroSlider {
         this.slides = [
             {
                 title: 'Безупречная механика',
-                subtitle: 'Высококачественная мебель и фурнитура мировых брендов<br>Индивидуальный подход к каждому клиенту'
+                subtitle: 'Надежная фурнитура премиум-сегмента. Индивидуальный подбор комплектующих.'
             },
             {
                 title: 'Профессиональные решения',
@@ -279,8 +279,23 @@ class ProductFilter {
 
         this.categoryFilters.forEach(filter => {
             filter.addEventListener('click', () => {
-                this.filterByCategory(filter.textContent.trim());
+                if (filter.dataset.filter === 'all') {
+                    this.showAll();
+                    if (this.searchInput) this.searchInput.value = '';
+                } else {
+                    this.filterByCategory(filter.textContent.trim());
+                }
             });
+        });
+
+        // Счётчик "Все товары" в категории Всё
+        const countAllEl = document.getElementById('filter-count-all');
+        if (countAllEl) countAllEl.textContent = this.products.length;
+    }
+
+    showAll() {
+        this.products.forEach(product => {
+            product.style.display = '';
         });
     }
 
@@ -394,6 +409,20 @@ function showProductModal(productName, productPrice, productImage, productDescri
 }
 
 // ==========================================
+// 7.1. АККОРДЕОН ФИЛЬТРОВ В КАТАЛОГЕ
+// ==========================================
+function initCatalogAccordion() {
+    document.querySelectorAll('.filter-group-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const group = btn.closest('.filter-group');
+            const isOpen = group.classList.contains('is-open');
+            group.classList.toggle('is-open', !isOpen);
+            btn.setAttribute('aria-expanded', !isOpen);
+        });
+    });
+}
+
+// ==========================================
 // 8. STICKY HEADER
 // ==========================================
 function initStickyHeader() {
@@ -470,6 +499,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализируем фильтр товаров в каталоге
     if (document.getElementById('product-search')) {
         new ProductFilter();
+    }
+
+    // Аккордеон категорий в сайдбаре каталога
+    if (document.querySelector('.filter-group-toggle')) {
+        initCatalogAccordion();
     }
 
     // Общие инициализации

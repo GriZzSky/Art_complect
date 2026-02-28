@@ -23,7 +23,6 @@
                     <div class="logo-icon">
                         <img src="images/logo.png" alt="АРТ-КОМПЛЕКТ">
                     </div>
-                    <span class="logo-text"></span>
                 </a>
                 
                 <nav>
@@ -36,15 +35,16 @@
                     </ul>
                 </nav>
 
-                <div class="header-contacts">
-                    <a href="tel:+79234617028" class="phone-number"><i class="fas fa-phone"></i> +7 (923) 461 70 28</a>
-                    <a href="tel:+79234617797" class="phone-number"><i class="fas fa-phone"></i> +7 (923) 461 77 97</a>
+                <div class="header-right">
+                    <div class="header-contacts">
+                        <a href="tel:+79234617028" class="phone-number"><i class="fas fa-phone"></i> +7 (923) 461 70 28</a>
+                        <a href="tel:+79234617797" class="phone-number"><i class="fas fa-phone"></i> +7 (923) 461 77 97</a>
+                    </div>
+                    <a href="cart.html" class="cart-icon" style="position: relative;">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-badge" style="display: none;">0</span>
+                    </a>
                 </div>
-                
-                <a href="cart.html" class="cart-icon" style="position: relative;">
-                    <i class="fas fa-shopping-cart" style="font-size: 24px;"></i>
-                    <span class="cart-badge" style="display: none;">0</span>
-                </a>
             </div>
         </div>
     </header>
@@ -52,56 +52,110 @@
     <!-- Main Content -->
     <section class="section">
         <div class="container">
-            <h1>Каталог</h1>
+            <header class="catalog-header">
+                <h1>Каталог</h1>
+                <div class="catalog-search-wrap">
+                    <input type="text" id="product-search" class="catalog-search" placeholder="Поиск по каталогу..." aria-label="Поиск">
+                </div>
+            </header>
             
             <div class="catalog-container">
                 <!-- Sidebar with filters -->
                 <aside class="sidebar">
-                    <div class="filter-group">
-                        <h3>Все товары</h3>
-                        <input type="text" id="product-search" placeholder="🔍 Поиск..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
+                    <div class="filter-group filter-group-all is-open">
+                        <button type="button" class="filter-group-toggle" aria-expanded="true">
+                            <span>Всё</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li data-filter="all">Все товары <span class="filter-count" id="filter-count-all">0</span></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="filter-group">
-                        <h3>Системы фасадов</h3>
-                        <ul>
-                            <li>Все <span class="filter-count">27</span></li>
-                        </ul>
+                        <button type="button" class="filter-group-toggle" aria-expanded="false">
+                            <span>Системы фасадов</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li>Все <span class="filter-count">27</span></li>
+                                <li>Направляющие <span class="filter-count">12</span></li>
+                                <li>Петли <span class="filter-count">15</span></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="filter-group">
-                        <h3>Раздвижная система</h3>
-                        <ul>
-                            <li>Все <span class="filter-count">17</span></li>
-                        </ul>
+                        <button type="button" class="filter-group-toggle" aria-expanded="false">
+                            <span>Раздвижная система</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li>Все <span class="filter-count">17</span></li>
+                                <li>Роликовые <span class="filter-count">8</span></li>
+                                <li>Шариковые <span class="filter-count">9</span></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="filter-group">
-                        <h3>Подъемные механизмы</h3>
-                        <ul>
-                            <li>Все <span class="filter-count">17</span></li>
-                        </ul>
+                        <button type="button" class="filter-group-toggle" aria-expanded="false">
+                            <span>Подъемные механизмы</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li>Все <span class="filter-count">17</span></li>
+                                <li>Газлифты <span class="filter-count">10</span></li>
+                                <li>Механизмы подъема <span class="filter-count">7</span></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="filter-group">
-                        <h3>Конструкторская система</h3>
-                        <ul>
-                            <li>Все <span class="filter-count">99</span></li>
-                        </ul>
+                        <button type="button" class="filter-group-toggle" aria-expanded="false">
+                            <span>Конструкторская система</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li>Все <span class="filter-count">99</span></li>
+                                <li>Соединители <span class="filter-count">45</span></li>
+                                <li>Кронштейны <span class="filter-count">54</span></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="filter-group">
-                        <h3>Направляющие системы</h3>
-                        <ul>
-                            <li>Все <span class="filter-count">78</span></li>
-                        </ul>
+                        <button type="button" class="filter-group-toggle" aria-expanded="false">
+                            <span>Направляющие системы</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li>Все <span class="filter-count">78</span></li>
+                                <li>Полного выдвижения <span class="filter-count">32</span></li>
+                                <li>Частичного выдвижения <span class="filter-count">46</span></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="filter-group">
-                        <h3>Мойки и смесители</h3>
-                        <ul>
-                            <li>Все <span class="filter-count">73</span></li>
-                        </ul>
+                        <button type="button" class="filter-group-toggle" aria-expanded="false">
+                            <span>Мойки и смесители</span>
+                            <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="filter-group-content">
+                            <ul>
+                                <li>Все <span class="filter-count">73</span></li>
+                                <li>Мойки <span class="filter-count">38</span></li>
+                                <li>Смесители <span class="filter-count">35</span></li>
+                            </ul>
+                        </div>
                     </div>
                 </aside>
 
@@ -109,17 +163,17 @@
                 <div class="products-grid">
                     <div class="product-card">
                         <div class="product-badge">В наличии</div>
-                        <img src="images/product-gaslift.jpg" alt="Газлифт" class="product-image" style="width: 100%; height: 200px; object-fit: cover;">
+                        <img src="images/product-gaslift.png" alt="Газлифт" class="product-image">
                         <div class="product-info">
                             <h3 class="product-name">Газлифт 100N для подъемного механизма</h3>
                             <div class="product-price">
                                 <span class="price-current">920 ₽</span>
                             </div>
                             <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-gaslift', 'Газлифт 100N для подъемного механизма', 920, 'images/product-gaslift.jpg')">
+                                <button class="btn btn-orange btn-small" onclick="addToCart('product-gaslift', 'Газлифт 100N для подъемного механизма', 920, 'images/product-gaslift.png')">
                                     <i class="fas fa-shopping-cart"></i> В корзину
                                 </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Газлифт 100N для подъемного механизма', 920, 'images/product-gaslift.jpg', 'Высококачественный газлифт для мебельных подъемных механизмов.')">
+                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Газлифт 100N для подъемного механизма', 920, 'images/product-gaslift.png', 'Высококачественный газлифт для мебельных подъемных механизмов.')">
                                     <i class="fas fa-info-circle"></i> Подробно
                                 </button>
                             </div>
@@ -128,17 +182,17 @@
 
                     <div class="product-card">
                         <div class="product-badge">В наличии</div>
-                        <img src="images/product-corner.jpg" alt="Угол мебельный" class="product-image" style="width: 100%; height: 200px; object-fit: cover;">
+                        <img src="images/product-corner.png" alt="Угол мебельный" class="product-image">
                         <div class="product-info">
                             <h3 class="product-name">Угол мебельный для столешницы</h3>
                             <div class="product-price">
                                 <span class="price-current">500 ₽</span>
                             </div>
                             <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-corner', 'Угол мебельный для столешницы', 500, 'images/product-corner.jpg')">
+                                <button class="btn btn-orange btn-small" onclick="addToCart('product-corner', 'Угол мебельный для столешницы', 500, 'images/product-corner.png')">
                                     <i class="fas fa-shopping-cart"></i> В корзину
                                 </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Угол мебельный для столешницы', 500, 'images/product-corner.jpg', 'Мебельный угол для защиты столешниц.')">
+                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Угол мебельный для столешницы', 500, 'images/product-corner.png', 'Мебельный угол для защиты столешниц.')">
                                     <i class="fas fa-info-circle"></i> Подробно
                                 </button>
                             </div>
@@ -147,17 +201,17 @@
 
                     <div class="product-card">
                         <div class="product-badge">В наличии</div>
-                        <img src="images/product-dryer.jpg" alt="Сушка для посуды" class="product-image" style="width: 100%; height: 200px; object-fit: cover;">
+                        <img src="images/product-dryer.png" alt="Сушка для посуды" class="product-image">
                         <div class="product-info">
                             <h3 class="product-name">Сушка для посуды выдвижная 600мм</h3>
                             <div class="product-price">
                                 <span class="price-current">330 ₽</span>
                             </div>
                             <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-dryer', 'Сушка для посуды выдвижная 600мм', 330, 'images/product-dryer.jpg')">
+                                <button class="btn btn-orange btn-small" onclick="addToCart('product-dryer', 'Сушка для посуды выдвижная 600мм', 330, 'images/product-dryer.png')">
                                     <i class="fas fa-shopping-cart"></i> В корзину
                                 </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Сушка для посуды выдвижная 600мм', 330, 'images/product-dryer.jpg', 'Выдвижная сушка для кухонных шкафов.')">
+                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Сушка для посуды выдвижная 600мм', 330, 'images/product-dryer.png', 'Выдвижная сушка для кухонных шкафов.')">
                                     <i class="fas fa-info-circle"></i> Подробно
                                 </button>
                             </div>
@@ -166,7 +220,7 @@
 
                     <div class="product-card">
                         <div class="product-badge discount">Скидка</div>
-                        <img src="images/product-marble.jpg" alt="Панель мрамор" class="product-image" style="width: 100%; height: 200px; object-fit: cover;">
+                        <img src="images/product-marble.png" alt="Панель мрамор" class="product-image">
                         <div class="product-info">
                             <h3 class="product-name">Панель задняя 450х600х0мм Мрамор</h3>
                             <div class="product-price">
@@ -174,10 +228,10 @@
                                 <span class="price-old">100 ₽</span>
                             </div>
                             <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-marble', 'Панель задняя 450х600х0мм Мрамор', 80, 'images/product-marble.jpg')">
+                                <button class="btn btn-orange btn-small" onclick="addToCart('product-marble', 'Панель задняя 450х600х0мм Мрамор', 80, 'images/product-marble.png')">
                                     <i class="fas fa-shopping-cart"></i> В корзину
                                 </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Панель задняя 450х600х0мм Мрамор', 80, 'images/product-marble.jpg', 'Декоративная панель с мраморной текстурой.')">
+                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Панель задняя 450х600х0мм Мрамор', 80, 'images/product-marble.png', 'Декоративная панель с мраморной текстурой.')">
                                     <i class="fas fa-info-circle"></i> Подробно
                                 </button>
                             </div>
