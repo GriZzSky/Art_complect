@@ -60,7 +60,7 @@
             </header>
             
             <div class="catalog-container">
-                <!-- Sidebar with filters -->
+                <!-- Sidebar: категории каталога -->
                 <aside class="sidebar">
                     <div class="filter-group filter-group-all is-open">
                         <button type="button" class="filter-group-toggle" aria-expanded="true">
@@ -69,232 +69,113 @@
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li data-filter="all">Все товары <span class="filter-count" id="filter-count-all">0</span></li>
+                                <li data-filter="all">Все товары</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="filter-group">
                         <button type="button" class="filter-group-toggle" aria-expanded="false">
-                            <span>Системы фасадов</span>
+                            <span>Мебельная фурнитура</span>
                             <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li>Все <span class="filter-count">27</span></li>
-                                <li>Направляющие <span class="filter-count">12</span></li>
-                                <li>Петли <span class="filter-count">15</span></li>
+                                <li data-filter="napravlyayushchie">Направляющие</li>
+                                <li data-filter="petli">Петли</li>
+                                <li data-filter="gazlifty">Газлифты и подъёмные механизмы</li>
+                                <li data-filter="stopory">Стопоры и ограничители</li>
+                                <li data-filter="polkoderzhateli">Полкодержатели</li>
+                                <li data-filter="plunzhery">Плунжеры и защёлки</li>
+                                <li data-filter="ugolki">Уголки мебельные</li>
+                                <li data-filter="zaglushki">Заглушки</li>
+                                <li data-filter="ruchki">Ручки и скобы</li>
+                                <li data-filter="nozhki">Ножки и цоколи</li>
+                                <li data-filter="podstavki">Подставки и держатели</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="filter-group">
                         <button type="button" class="filter-group-toggle" aria-expanded="false">
-                            <span>Раздвижная система</span>
+                            <span>Крепёж и метизы</span>
                             <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li>Все <span class="filter-count">17</span></li>
-                                <li>Роликовые <span class="filter-count">8</span></li>
-                                <li>Шариковые <span class="filter-count">9</span></li>
+                                <li data-filter="samorezy">Саморезы и метизы</li>
+                                <li data-filter="krepezh">Крепёж (минификс, эксцентрик, дюбели)</li>
+                                <li data-filter="styazhki">Стяжки</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="filter-group">
                         <button type="button" class="filter-group-toggle" aria-expanded="false">
-                            <span>Подъемные механизмы</span>
+                            <span>Раздвижные и фасадные системы</span>
                             <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li>Все <span class="filter-count">17</span></li>
-                                <li>Газлифты <span class="filter-count">10</span></li>
-                                <li>Механизмы подъема <span class="filter-count">7</span></li>
+                                <li data-filter="napravlyayushchie-sistemy">Направляющие (системы)</li>
+                                <li data-filter="razdvizhnye">Раздвижные механизмы</li>
+                                <li data-filter="profili">Профили</li>
+                                <li data-filter="konstruktorskaya">Конструкторская система</li>
+                                <li data-filter="vnutrennee-napolnenie">Внутреннее наполнение и системы хранения</li>
+                                <li data-filter="truby-flantsy">Трубы и фланцы</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="filter-group">
                         <button type="button" class="filter-group-toggle" aria-expanded="false">
-                            <span>Конструкторская система</span>
+                            <span>Материалы и панели</span>
                             <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li>Все <span class="filter-count">99</span></li>
-                                <li>Соединители <span class="filter-count">45</span></li>
-                                <li>Кронштейны <span class="filter-count">54</span></li>
+                                <li data-filter="kromka-ldsp">Кромка ПВХ / ЛДСП</li>
+                                <li data-filter="paneli-zadnie">Панели задние</li>
+                                <li data-filter="paneli-plity">Панели и плиты</li>
+                                <li data-filter="stoleshnitsy">Столешницы и мебельные щиты</li>
+                                <li data-filter="pilomaterialy">Пиломатериалы и массив</li>
+                                <li data-filter="plintusy">Плинтусы и аксессуары</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="filter-group">
                         <button type="button" class="filter-group-toggle" aria-expanded="false">
-                            <span>Направляющие системы</span>
+                            <span>Кухонная зона</span>
                             <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li>Все <span class="filter-count">78</span></li>
-                                <li>Полного выдвижения <span class="filter-count">32</span></li>
-                                <li>Частичного выдвижения <span class="filter-count">46</span></li>
+                                <li data-filter="moyki">Мойки</li>
+                                <li data-filter="smesiteli">Смесители и арматура</li>
+                                <li data-filter="sushki">Сушки для посуды</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="filter-group">
                         <button type="button" class="filter-group-toggle" aria-expanded="false">
-                            <span>Мойки и смесители</span>
+                            <span>Инструмент и оборудование</span>
                             <i class="fas fa-chevron-down filter-group-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="filter-group-content">
                             <ul>
-                                <li>Все <span class="filter-count">73</span></li>
-                                <li>Мойки <span class="filter-count">38</span></li>
-                                <li>Смесители <span class="filter-count">35</span></li>
+                                <li data-filter="elektroinstrument">Электроинструмент и оборудование</li>
                             </ul>
                         </div>
                     </div>
                 </aside>
 
-                <!-- Products Grid -->
-                <div class="products-grid">
-                    <div class="product-card">
-                        <div class="product-badge">В наличии</div>
-                        <img src="images/product-gaslift.png" alt="Газлифт" class="product-image">
-                        <div class="product-info">
-                            <h3 class="product-name">Газлифт 100N для подъемного механизма</h3>
-                            <div class="product-price">
-                                <span class="price-current">920 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-gaslift', 'Газлифт 100N для подъемного механизма', 920, 'images/product-gaslift.png')">
-                                    <i class="fas fa-shopping-cart"></i> В корзину
-                                </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Газлифт 100N для подъемного механизма', 920, 'images/product-gaslift.png', 'Высококачественный газлифт для мебельных подъемных механизмов.')">
-                                    <i class="fas fa-info-circle"></i> Подробно
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-badge">В наличии</div>
-                        <img src="images/product-corner.png" alt="Угол мебельный" class="product-image">
-                        <div class="product-info">
-                            <h3 class="product-name">Угол мебельный для столешницы</h3>
-                            <div class="product-price">
-                                <span class="price-current">500 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-corner', 'Угол мебельный для столешницы', 500, 'images/product-corner.png')">
-                                    <i class="fas fa-shopping-cart"></i> В корзину
-                                </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Угол мебельный для столешницы', 500, 'images/product-corner.png', 'Мебельный угол для защиты столешниц.')">
-                                    <i class="fas fa-info-circle"></i> Подробно
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-badge">В наличии</div>
-                        <img src="images/product-dryer.png" alt="Сушка для посуды" class="product-image">
-                        <div class="product-info">
-                            <h3 class="product-name">Сушка для посуды выдвижная 600мм</h3>
-                            <div class="product-price">
-                                <span class="price-current">330 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-dryer', 'Сушка для посуды выдвижная 600мм', 330, 'images/product-dryer.png')">
-                                    <i class="fas fa-shopping-cart"></i> В корзину
-                                </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Сушка для посуды выдвижная 600мм', 330, 'images/product-dryer.png', 'Выдвижная сушка для кухонных шкафов.')">
-                                    <i class="fas fa-info-circle"></i> Подробно
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-badge discount">Скидка</div>
-                        <img src="images/product-marble.png" alt="Панель мрамор" class="product-image">
-                        <div class="product-info">
-                            <h3 class="product-name">Панель задняя 450х600х0мм Мрамор</h3>
-                            <div class="product-price">
-                                <span class="price-current">80 ₽</span>
-                                <span class="price-old">100 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small" onclick="addToCart('product-marble', 'Панель задняя 450х600х0мм Мрамор', 80, 'images/product-marble.png')">
-                                    <i class="fas fa-shopping-cart"></i> В корзину
-                                </button>
-                                <button class="btn btn-yellow btn-small" onclick="showProductModal('Панель задняя 450х600х0мм Мрамор', 80, 'images/product-marble.png', 'Декоративная панель с мраморной текстурой.')">
-                                    <i class="fas fa-info-circle"></i> Подробно
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-badge">В наличии</div>
-                        <div class="product-image">Изображение товара</div>
-                        <div class="product-info">
-                            <h3 class="product-name">Кольцо врезн 1053 Art silver Антик серебро</h3>
-                            <div class="product-price">
-                                <span class="price-current">56 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small">В корзину</button>
-                                <button class="btn btn-yellow btn-small">Подробно</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-image">Изображение товара</div>
-                        <div class="product-info">
-                            <h3 class="product-name">Панель задняя 450х600х0мм Гранит</h3>
-                            <div class="product-price">
-                                <span class="price-current">1 350 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small">В корзину</button>
-                                <button class="btn btn-yellow btn-small">Подробно</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-image">Изображение товара</div>
-                        <div class="product-info">
-                            <h3 class="product-name">Мойка Groфвест DUOMO С оффсет Антик Белый</h3>
-                            <div class="product-price">
-                                <span class="price-current">17 800 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small">В корзину</button>
-                                <button class="btn btn-yellow btn-small">Подробно</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-card">
-                        <div class="product-image">Изображение товара</div>
-                        <div class="product-info">
-                            <h3 class="product-name">Смеситель StartPro EKOL<br>с высоким изливом арматура нерж</h3>
-                            <div class="product-price">
-                                <span class="price-current">11 050 ₽</span>
-                            </div>
-                            <div class="product-actions">
-                                <button class="btn btn-orange btn-small">В корзину</button>
-                                <button class="btn btn-yellow btn-small">Подробно</button>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Products Grid: товары подставляются с бэкенда (API) -->
+                <div class="products-grid" id="products-grid">
+                    <div class="catalog-loading" id="catalog-loading">Загрузка каталога…</div>
                 </div>
+                <div class="catalog-pagination" id="catalog-pagination"></div>
             </div>
         </div>
     </section>
@@ -306,10 +187,10 @@
                 <div class="footer-section">
                     <div class="footer-logo">
                         <div class="footer-logo-icon">
-                            <img src="images/logo.png" alt="АРТ-КОМПЛЕКТ">
+                            <img src="images/LOGO.png" alt="АРТ-КОМПЛЕКТ">
                         </div>
                     </div>
-                    <p>Наш надежный поставщик мебельной фурнитуры. Качество, скорость и индивидуальный подход к каждому клиенту – залог нашего успешного сотрудничества.</p>
+                    <p>Ваш надежный поставщик мебельной фурнитуры. Качество в каждой детали, индивидуальный подход к каждому заказу.</p>
                 </div>
 
                 <div class="footer-section">
@@ -326,35 +207,34 @@
                 <div class="footer-section">
                     <h3>Контакты</h3>
                     <div class="contact-item">
-                        <span>📞</span>
+                        <span class="contact-icon-footer"><i class="fas fa-phone"></i></span>
                         <div>
                             <div>+7 (923) 461 70 28</div>
                             <div>+7 (923) 461 77 97</div>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <span>✉️</span>
-                        <a href="mailto:artkomplekt@mail.ru" style="color: #ccc;">artkomplekt@mail.ru</a>
+                        <span class="contact-icon-footer"><i class="fas fa-envelope"></i></span>
+                        <a href="mailto:artcom_yarik@mail.ru">artcom_yarik@mail.ru</a>
                     </div>
                     <div class="contact-item">
-                        <span>📍</span>
-                        <span>г. Красноярск<br>пр. Красных Партизан, 14/1</span>
+                        <span class="contact-icon-footer"><i class="fas fa-location-dot"></i></span>
+                        <span>г. Новокузнецк, пр. Курако, 51а корп. 18</span>
                     </div>
                 </div>
 
                 <div class="footer-section">
                     <h3>Режим работы</h3>
-                    <p>Пн-Пт: 09:00 - 18:00<br>
-                    Сб-Вс: Выходной</p>
+                    <p>Пн-Пт: 09:00–18:00<br>Вс-Сб: выходной</p>
                     <div class="social-icons">
-                        <a href="#" class="social-icon">📱</a>
-                        <a href="#" class="social-icon">📧</a>
+                        <a href="#" class="social-icon" title="Написать"><i class="fas fa-paper-plane"></i></a>
                     </div>
                 </div>
             </div>
 
             <div class="footer-bottom">
-                <p>© 2025 АРТ-КОМПЛЕКТ. Все права защищены. | ДОГОВОРИСЬ | ТОП КАТАЛОГОВ | СТУДЕНЧЕСКИЙ</p>
+                <p class="footer-copyright">© 2026 АРТ-КОМПЛЕКТ. Все права защищены.</p>
+                <p class="footer-legal">ИНН: 4217202754 | КПП: 421701001 | ОГРН: 1214200011937</p>
             </div>
         </div>
     </footer>

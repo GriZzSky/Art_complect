@@ -1,4 +1,9 @@
-// АРТ-КОМПЛЕКТ - Main JavaScript File
+﻿// АРТ-КОМПЛЕКТ - Main JavaScript File
+
+// Базовый URL API бэкенда (можно переопределить в HTML: window.ART_COMPL_API_BASE = '...')
+// По умолчанию 127.0.0.1:8001 — можно переопределить в HTML: window.ART_COMPL_API_BASE
+const API_BASE = typeof window !== 'undefined' && window.ART_COMPL_API_BASE ? window.ART_COMPL_API_BASE : 'http://127.0.0.1:8001';
+const CATALOG_PAGE_SIZE = 12;
 
 // ==========================================
 // 1. КОРЗИНА (Cart Management)
@@ -48,7 +53,7 @@ class ShoppingCart {
     }
 
     getTotal() {
-        return this.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        return this.items.reduce((total, item) => total + (item.price || 0) * item.quantity, 0);
     }
 
     saveCart() {
@@ -82,40 +87,46 @@ class ShoppingCart {
             return;
         }
 
-        cartContainer.innerHTML = this.items.map(item => `
-            <div class="cart-item" data-id="${item.id}">
-                <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+        cartContainer.innerHTML = this.items.map(item => {
+            const priceLabel = (item.price && item.price > 0) ? formatMoney(item.price) : 'Цена по запросу';
+            const subtotal = (item.price && item.price > 0) ? formatMoney(item.price * item.quantity) : 'По запросу';
+            const imgHtml = item.image
+                ? `<img src="${item.image}" alt="${item.name}" class="cart-item-image">`
+                : '<div class="cart-item-image cart-item-no-image"><i class="fas fa-box"></i></div>';
+            return `
+            <div class="cart-item" data-id="${escapeHtml(item.id)}">
+                ${imgHtml}
                 <div class="cart-item-info">
-                    <h3>${item.name}</h3>
-                    <p style="color: #666; font-size: 14px;">${item.price} ₽ x ${item.quantity}</p>
+                    <h3>${escapeHtml(item.name)}</h3>
+                    <p style="color: #666; font-size: 14px;">${priceLabel} ${item.quantity > 1 ? '× ' + item.quantity : ''}</p>
                 </div>
                 <div class="quantity-control">
-                    <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', ${item.quantity - 1})">−</button>
+                    <button class="quantity-btn" onclick="cart.updateQuantity('${escapeHtml(item.id)}', ${item.quantity - 1})">−</button>
                     <span class="quantity-value">${item.quantity}</span>
-                    <button class="quantity-btn" onclick="cart.updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
+                    <button class="quantity-btn" onclick="cart.updateQuantity('${escapeHtml(item.id)}', ${item.quantity + 1})">+</button>
                 </div>
                 <div>
-                    <div style="font-size: 20px; font-weight: bold; color: #12142B; margin-bottom: 10px;">
-                        ${(item.price * item.quantity).toLocaleString('ru-RU')} ₽
-                    </div>
-                    <button class="btn-remove" onclick="cart.removeItem('${item.id}')">🗑️</button>
+                    <div style="font-size: 20px; font-weight: bold; color: #12142B; margin-bottom: 10px;">${subtotal}</div>
+                    <button class="btn-remove" onclick="cart.removeItem('${escapeHtml(item.id)}')">🗑️</button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         if (cartSummary) {
             const totalPrice = this.getTotal();
             const totalItems = this.items.reduce((sum, item) => sum + item.quantity, 0);
-            
+            const hasRequestPrice = this.items.some(item => !item.price || item.price === 0);
+            const totalLabel = hasRequestPrice && totalPrice === 0 ? 'По запросу' : formatMoney(totalPrice);
             cartSummary.innerHTML = `
                 <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
                     <div class="summary-row">
                         <span>Товары (${totalItems} шт.)</span>
-                        <span>${totalPrice.toLocaleString('ru-RU')} ₽</span>
+                        <span>${totalLabel}</span>
                     </div>
                     <div class="summary-row total">
                         <span>Итого:</span>
-                        <span>${totalPrice.toLocaleString('ru-RU')} ₽</span>
+                        <span>${totalLabel}</span>
                     </div>
                 </div>
                 <button class="btn btn-yellow" style="width: 100%; padding: 18px; font-size: 18px;" onclick="cart.checkout()">
@@ -132,7 +143,7 @@ class ShoppingCart {
             return;
         }
         
-        alert(`Спасибо за заказ!\n\nВсего товаров: ${this.items.reduce((sum, item) => sum + item.quantity, 0)}\nСумма: ${this.getTotal().toLocaleString('ru-RU')} ₽\n\nМы свяжемся с вами в ближайшее время.`);
+        alert(`Спасибо за заказ!\n\nВсего товаров: ${this.items.reduce((sum, item) => sum + item.quantity, 0)}\nСумма: ${formatMoney(this.getTotal())}\n\nМы свяжемся с вами в ближайшее время.`);
         this.items = [];
         this.saveCart();
         this.renderCartItems();
@@ -279,18 +290,15 @@ class ProductFilter {
 
         this.categoryFilters.forEach(filter => {
             filter.addEventListener('click', () => {
-                if (filter.dataset.filter === 'all') {
-                    this.showAll();
-                    if (this.searchInput) this.searchInput.value = '';
-                } else {
-                    this.filterByCategory(filter.textContent.trim());
-                }
+                const slug = filter.dataset.filter;
+                if (window.catalogLoader) window.catalogLoader.setCategory(slug || 'all');
+                if (slug === 'all' && this.searchInput) this.searchInput.value = '';
             });
         });
+    }
 
-        // Счётчик "Все товары" в категории Всё
-        const countAllEl = document.getElementById('filter-count-all');
-        if (countAllEl) countAllEl.textContent = this.products.length;
+    refreshProducts() {
+        this.products = document.querySelectorAll('.product-card');
     }
 
     showAll() {
@@ -301,18 +309,178 @@ class ProductFilter {
 
     filterProducts(searchTerm) {
         this.products.forEach(product => {
-            const productName = product.querySelector('.product-name').textContent.toLowerCase();
-            const isVisible = productName.includes(searchTerm);
+            const nameEl = product.querySelector('.product-name');
+            const codeEl = product.querySelector('.product-code');
+            const name = (nameEl ? nameEl.textContent : '') + (codeEl ? ' ' + codeEl.textContent : '');
+            const isVisible = name.toLowerCase().includes(searchTerm);
             product.style.display = isVisible ? 'block' : 'none';
         });
     }
+}
 
-    filterByCategory(category) {
-        // Здесь можно добавить логику фильтрации по категориям
-        // Пока просто показываем все товары
-        this.products.forEach(product => {
-            product.style.display = 'block';
+// ==========================================
+// 3.1. ЗАГРУЗКА КАТАЛОГА С API (постранично)
+// ==========================================
+class CatalogLoader {
+    constructor() {
+        this.grid = document.getElementById('products-grid');
+        this.paginationEl = document.getElementById('catalog-pagination');
+        this.loadingEl = document.getElementById('catalog-loading');
+        this.currentPage = 1;
+        this.totalCount = 0;
+        this.currentCategory = null;
+        if (this.grid) {
+            this.loadPage(1);
+            this.paginationEl && this.paginationEl.addEventListener('click', this.onPaginationClick.bind(this));
+        }
+    }
+
+    setCategory(categorySlug) {
+        this.currentCategory = categorySlug === 'all' || !categorySlug ? null : categorySlug;
+        this.loadPage(1);
+    }
+
+    onPaginationClick(e) {
+        const pageBtn = e.target.closest('.catalog-page-btn');
+        if (pageBtn && pageBtn.dataset.page) {
+            e.preventDefault();
+            const page = parseInt(pageBtn.dataset.page, 10);
+            if (page >= 1 && page !== this.currentPage) this.loadPage(page);
+            return;
+        }
+        const prevBtn = e.target.closest('[data-dir="prev"]');
+        if (prevBtn && !prevBtn.disabled) {
+            e.preventDefault();
+            if (this.currentPage > 1) this.loadPage(this.currentPage - 1);
+            return;
+        }
+        const nextBtn = e.target.closest('[data-dir="next"]');
+        if (nextBtn && !nextBtn.disabled) {
+            e.preventDefault();
+            this.loadPage(this.currentPage + 1);
+        }
+    }
+
+    async loadPage(page) {
+        if (!this.grid) return;
+        if (this.loadingEl) this.loadingEl.style.display = 'block';
+        const skip = (page - 1) * CATALOG_PAGE_SIZE;
+        const params = new URLSearchParams({ skip: String(skip), limit: String(CATALOG_PAGE_SIZE), active_only: 'true' });
+        if (this.currentCategory) params.set('category', this.currentCategory);
+        try {
+            const res = await fetch(`${API_BASE}/api/products?${params.toString()}`);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const totalHeader = res.headers.get('X-Total-Count');
+            if (totalHeader !== null) this.totalCount = parseInt(totalHeader, 10) || 0;
+            const list = await res.json();
+            this.currentPage = page;
+            this.grid.innerHTML = '';
+            this.renderCards(list);
+            this.renderPagination();
+            if (window.catalogProductFilter) window.catalogProductFilter.refreshProducts();
+        } catch (err) {
+            const reason = err.message || (err.name === 'TypeError' ? 'нет связи с сервером' : String(err));
+            this.grid.innerHTML = '<div class="alert alert-danger">Не удалось загрузить каталог. Проверьте, что бэкенд запущен (<code>' + API_BASE + '</code>).<br><small>Причина: ' + escapeHtml(reason) + '</small></div>';
+            if (this.paginationEl) this.paginationEl.innerHTML = '';
+        }
+        if (this.loadingEl) this.loadingEl.style.display = 'none';
+    }
+
+    renderCards(products) {
+        if (!this.grid) return;
+        if (!products.length) {
+            this.grid.innerHTML = '<div class="catalog-empty">В этой категории пока нет товаров.</div>';
+            return;
+        }
+        const fragment = document.createDocumentFragment();
+        products.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            const name = p.name || 'Без названия';
+            const code = p.code ? String(p.code) : '';
+            const unit = p.unit ? `Ед.: ${p.unit}` : '';
+            const desc = [code, unit].filter(Boolean).join(' · ') || 'Высококачественная фурнитура для мебели.';
+            const inStock = p.in_stock !== false;
+            const price = typeof p.price === 'number' ? p.price : 0;
+            const hasPrice = inStock && price > 0;
+            const imageUrl = resolveApiUrl(p.image_url || '');
+            const imageHtml = imageUrl
+                ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-image">`
+                : '<div class="product-image product-image-placeholder"><i class="fas fa-box"></i><span>Нет изображения</span></div>';
+            const badgeLabel = inStock ? 'В наличии' : 'Нет в наличии';
+            const badgeClass = inStock ? 'product-badge' : 'product-badge product-badge-out';
+            const priceHtml = !inStock
+                ? '<span class="price-unavailable">Нет в наличии</span>'
+                : `<span class="price-current">${hasPrice ? formatPrice(price) : 'Цена по запросу'}</span>`;
+            card.innerHTML = `
+                <div class="${badgeClass}">${badgeLabel}</div>
+                ${imageHtml}
+                <div class="product-info">
+                    <h3 class="product-name">${escapeHtml(name)}</h3>
+                    ${code ? `<p class="product-code text-muted small">Артикул: ${escapeHtml(code)}</p>` : ''}
+                    <div class="product-price">${priceHtml}</div>
+                    <div class="product-actions">
+                        <button class="btn btn-orange btn-small btn-add-cart" data-id="${escapeHtml(p.external_id)}" data-name="${escapeHtml(name)}" ${inStock ? '' : 'disabled'}>
+                            <i class="fas fa-shopping-cart"></i> ${inStock ? 'В корзину' : 'Нет в наличии'}
+                        </button>
+                        <button class="btn btn-yellow btn-small btn-details" data-name="${escapeHtml(name)}" data-desc="${escapeHtml(desc)}" data-id="${escapeHtml(p.external_id)}">
+                            <i class="fas fa-info-circle"></i> Подробно
+                        </button>
+                    </div>
+                </div>
+            `;
+            const addBtn = card.querySelector('.btn-add-cart');
+            if (inStock) {
+                addBtn.addEventListener('click', () => {
+                    addToCart(p.external_id, name, hasPrice ? price : 0, imageUrl);
+                });
+            }
+            card.querySelector('.btn-details').addEventListener('click', () => {
+                showProductModal(name, hasPrice ? price : 0, imageUrl, desc, p.external_id, inStock);
+            });
+            fragment.appendChild(card);
         });
+        this.grid.appendChild(fragment);
+    }
+
+    renderPagination() {
+        if (!this.paginationEl) return;
+        const cur = this.currentPage;
+        const totalPages = Math.max(1, Math.ceil(this.totalCount / CATALOG_PAGE_SIZE));
+        const prevDisabled = cur <= 1;
+        const showNext = cur < totalPages;
+
+        const items = [];
+        const left = Math.max(1, cur - 2);
+        const right = Math.min(totalPages, cur + 2);
+
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) items.push(i);
+        } else {
+            if (left > 1) items.push(1);
+            if (left > 2) items.push('...');
+            for (let i = left; i <= right; i++) items.push(i);
+            if (right < totalPages - 1) items.push('...');
+            if (right < totalPages) items.push(totalPages);
+        }
+
+        const pageBtns = items.map(item => {
+            if (item === '...') {
+                return '<span class="catalog-page-ellipsis">. . .</span>';
+            }
+            const active = item === cur ? ' catalog-page-btn-active' : '';
+            return `<button type="button" class="btn catalog-page-btn${active}" data-page="${item}">${item}</button>`;
+        }).join('');
+
+        const svgPrev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+        const svgNext = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+        this.paginationEl.innerHTML = `
+            <div class="catalog-pagination-inner">
+                <button type="button" class="btn btn-pagination-arrow" aria-label="Предыдущая" ${prevDisabled ? 'disabled' : ''} data-dir="prev">${svgPrev}</button>
+                <div class="catalog-page-btns">${pageBtns}</div>
+                <button type="button" class="btn btn-pagination-arrow" aria-label="Следующая" ${showNext ? '' : 'disabled'} data-dir="next">${svgNext}</button>
+            </div>
+        `;
     }
 }
 
@@ -324,7 +492,7 @@ function addToCart(productId, productName, productPrice, productImage) {
         id: productId,
         name: productName,
         price: productPrice,
-        image: productImage
+        image: productImage || ''
     });
 }
 
@@ -371,21 +539,35 @@ function initScrollAnimations() {
 // ==========================================
 // 7. МОДАЛЬНОЕ ОКНО ДЛЯ ТОВАРА
 // ==========================================
-function showProductModal(productName, productPrice, productImage, productDescription) {
+function showProductModal(productName, productPrice, productImage, productDescription, productId, productInStock = true) {
+    const id = productId || '';
+    const inStock = productInStock !== false;
+    const priceVal = productPrice != null && productPrice > 0 ? productPrice : 0;
+    const priceHtml = !inStock
+        ? 'Нет в наличии'
+        : priceVal > 0
+            ? formatMoney(priceVal)
+            : 'Цена по запросу';
+    const imgHtml = productImage
+        ? `<img src="${productImage}" alt="${escapeHtml(productName)}" class="modal-image">`
+        : '<div class="modal-image modal-no-image"><i class="fas fa-box"></i><span>Нет изображения</span></div>';
+    const actionButton = inStock
+        ? `<button class="btn btn-orange add-to-cart-modal-btn" data-id="${escapeHtml(id)}" data-name="${escapeHtml(productName)}" data-price="${priceVal}" data-image="${escapeHtml(productImage || '')}">
+                        Добавить в корзину
+                    </button>`
+        : '<button class="btn btn-orange add-to-cart-modal-btn" disabled>Нет в наличии</button>';
     const modal = document.createElement('div');
     modal.className = 'product-modal';
     modal.innerHTML = `
         <div class="modal-content">
             <span class="modal-close">&times;</span>
             <div class="modal-body">
-                <img src="${productImage}" alt="${productName}" class="modal-image">
+                ${imgHtml}
                 <div class="modal-info">
-                    <h2>${productName}</h2>
-                    <p class="modal-price">${productPrice} ₽</p>
-                    <p class="modal-description">${productDescription || 'Высококачественная фурнитура для мебели.'}</p>
-                    <button class="btn btn-orange" onclick="addToCart('${productName}', '${productName}', ${productPrice}, '${productImage}'); this.closest('.product-modal').remove();">
-                        Добавить в корзину
-                    </button>
+                    <h2>${escapeHtml(productName)}</h2>
+                    <p class="modal-price">${priceHtml}</p>
+                    <p class="modal-description">${escapeHtml(productDescription || 'Высококачественная фурнитура для мебели.')}</p>
+                    ${actionButton}
                 </div>
             </div>
         </div>
@@ -393,6 +575,15 @@ function showProductModal(productName, productPrice, productImage, productDescri
 
     document.body.appendChild(modal);
     setTimeout(() => modal.classList.add('show'), 10);
+
+    const addToCartBtn = modal.querySelector('.add-to-cart-modal-btn');
+    if (addToCartBtn && !addToCartBtn.disabled) {
+        addToCartBtn.addEventListener('click', function() {
+            addToCart(this.dataset.id, this.dataset.name, Number(this.dataset.price), this.dataset.image || '');
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        });
+    }
 
     const closeBtn = modal.querySelector('.modal-close');
     closeBtn.addEventListener('click', () => {
@@ -496,9 +687,14 @@ document.addEventListener('DOMContentLoaded', () => {
         new HeroSlider();
     }
 
-    // Инициализируем фильтр товаров в каталоге
+    // Инициализируем фильтр товаров в каталоге (обновляется после загрузки карточек с API)
     if (document.getElementById('product-search')) {
-        new ProductFilter();
+        window.catalogProductFilter = new ProductFilter();
+    }
+
+    // Загрузка каталога с бэкенда (страница каталога)
+    if (document.getElementById('products-grid')) {
+        window.catalogLoader = new CatalogLoader();
     }
 
     // Аккордеон категорий в сайдбаре каталога
@@ -545,12 +741,37 @@ document.addEventListener('DOMContentLoaded', () => {
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ==========================================
 
-// Форматирование цены
-function formatPrice(price) {
-    return price.toLocaleString('ru-RU') + ' ₽';
+// Экранирование HTML для безопасной подстановки в атрибуты
+function escapeHtml(str) {
+    if (str == null) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML.replace(/'/g, '&#39;');
 }
 
-// Показать loading
+// Форматирование цены
+function formatMoney(value) {
+    return new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value) + ' р';
+}
+
+function formatPrice(price) {
+    if (price == null || price === 0) return 'Цена по запросу';
+    return formatMoney(price);
+}
+
+function resolveApiUrl(path) {
+    if (!path) return '';
+    try {
+        return new URL(path, API_BASE).toString();
+    } catch (err) {
+        return path;
+    }
+}
+
+// Show loading
 function showLoading() {
     const loader = document.createElement('div');
     loader.className = 'loading-spinner';
@@ -563,3 +784,5 @@ function hideLoading() {
     const loader = document.querySelector('.loading-spinner');
     if (loader) loader.remove();
 }
+
+

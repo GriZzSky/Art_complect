@@ -1,4 +1,4 @@
-/* Общие стили */
+﻿/* Общие стили */
 * {
     margin: 0;
     padding: 0;
@@ -12,9 +12,10 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
+    width: 100%;
 }
 
 /* Header — только верхняя шапка сайта (body > header) */
@@ -34,8 +35,9 @@ body > header {
     align-items: center;
     gap: 24px;
     padding: 0;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .logo {
@@ -66,7 +68,7 @@ body > header .header-top nav {
 nav ul {
     display: flex;
     list-style: none;
-    gap: 4px;
+    gap: 6px;
     margin: 0;
     padding: 0;
 }
@@ -74,10 +76,12 @@ nav ul {
 nav ul li a {
     color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 500;
     letter-spacing: 0.3px;
-    padding: 10px 18px;
+    padding: 12px 26px;
+    min-width: 110px;
+    text-align: center;
     border-radius: 8px;
     transition: color 0.2s, background 0.2s;
 }
@@ -110,7 +114,7 @@ nav ul li a.active {
     color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     font-weight: 500;
-    font-size: 13px;
+    font-size: 15px;
     transition: color 0.2s;
 }
 
@@ -121,14 +125,14 @@ nav ul li a.active {
 .phone-number i {
     color: #D59004;
     margin-right: 6px;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .cart-icon {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
-    font-size: 18px;
+    font-size: 20px;
     width: 42px;
     height: 42px;
     border-radius: 10px;
@@ -253,7 +257,7 @@ nav ul li a.active {
 }
 
 .section-why .section-head {
-    max-width: 640px;
+    max-width: 800px;
     margin: 0 auto 56px;
 }
 
@@ -476,40 +480,66 @@ nav ul li a.active {
     background-color: #ff7700;
 }
 
-/* Footer */
+/* Footer — ширина как у header (1600px), аккуратная сетка */
 footer {
     background-color: #12142B;
     color: white;
-    padding: 50px 0 20px;
+    padding: 56px 0 24px;
+}
+
+footer .container {
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 24px;
 }
 
 .footer-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
-    margin-bottom: 30px;
+    grid-template-columns: minmax(200px, 1fr) minmax(140px, auto) minmax(220px, 1fr) minmax(180px, 1fr);
+    gap: 48px 32px;
+    margin-bottom: 32px;
+    align-items: start;
 }
 
 .footer-section h3 {
-    margin-bottom: 20px;
+    margin: 0 0 20px;
     font-size: 18px;
     font-weight: 600;
     color: white;
+    letter-spacing: 0.02em;
 }
 
-/* Первая колонка футера: логотип строго над текстом */
 .footer-content .footer-section:first-child {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    max-width: 320px;
 }
 
 .footer-logo {
+    display: block;
+    margin-bottom: 8px;
+    margin-left: 24px;
+}
+
+.footer-logo-icon {
+    width: 175px;
+    height: 175px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 0px;
-    margin-left: 28px;
+    justify-content: center;
+    overflow: visible;
+}
+
+.footer-logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transform: scale(1.45);
+    transform-origin: center top;
 }
 
 .footer-logo-text {
@@ -519,37 +549,26 @@ footer {
     color: white;
 }
 
-.footer-logo-icon {
-    width: 175px;
-    height: 175px;
-    flex-shrink: 0;
-    overflow: visible;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.footer-logo-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-    transform: scale(1.6);
-    transform-origin: center center;
-}
-
 .footer-section p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
-    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 15px;
+    line-height: 1.65;
     margin: 0;
 }
 
-/* Текст под логотипом, зазор 10px */
 .footer-section .footer-logo + p {
-    margin-top: -20px;
+    margin-top: 0;
     padding-top: 0;
     max-width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+footer .footer-logo,
+footer .footer-logo-icon,
+footer .footer-logo-icon img {
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .footer-section ul {
@@ -571,8 +590,8 @@ footer {
     display: inline-block;
     color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
-    font-size: 14px;
-    line-height: 1.4;
+    font-size: 16px;
+    line-height: 1.5;
     transition: color 0.3s;
 }
 
@@ -583,18 +602,32 @@ footer {
 .contact-item {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
-    color: rgba(255, 255, 255, 0.9);
+    gap: 12px;
+    margin-bottom: 14px;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.contact-item:last-child {
+    margin-bottom: 0;
 }
 
 .contact-icon-footer {
     color: #D59004;
     margin-top: 2px;
+    font-size: 16px;
 }
 
 .contact-item a {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 15px;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.contact-item a:hover {
+    color: #D59004;
 }
 
 .social-icons {
@@ -628,16 +661,19 @@ footer {
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .footer-copyright {
     margin: 0;
+    font-size: 14px;
 }
 
 .footer-legal {
     margin: 0;
+    font-size: 14px;
 }
 
 /* Catalog */
@@ -831,10 +867,13 @@ footer {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 30px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .product-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 380px;
     background: #ffffff;
     border-radius: 14px;
     overflow: hidden;
@@ -864,6 +903,10 @@ footer {
     background-color: #f44336;
 }
 
+.product-badge.product-badge-out {
+    background-color: #7b7f87;
+}
+
 .product-image {
     width: 100%;
     height: 200px;
@@ -873,15 +916,142 @@ footer {
     display: block;
 }
 
-.product-card div.product-image {
+.product-card div.product-image,
+.product-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #999;
+    font-size: 13px;
+    background: #f5f5f5;
+}
+
+.product-image-placeholder i {
+    font-size: 2.5rem;
+    opacity: 0.6;
+}
+
+.cart-item-no-image {
+    width: 100px;
+    height: 100px;
+    min-width: 100px;
+    background: #f0f0f0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #999;
-    font-size: 13px;
+    font-size: 1.5rem;
+}
+
+.modal-no-image {
+    width: 100%;
+    min-height: 200px;
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #999;
+}
+
+.modal-no-image i { font-size: 3rem; }
+
+.catalog-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.catalog-pagination {
+    grid-column: 2 / -1;
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.catalog-pagination-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.catalog-page-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.catalog-pagination .btn {
+    transition: none;
+}
+
+.btn-pagination-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: #D59004;
+    color: #fff;
+    cursor: pointer;
+}
+
+.btn-pagination-arrow svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.btn-pagination-arrow:hover:not(:disabled) {
+    background: #c28103;
+}
+
+.btn-pagination-arrow:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.catalog-page-btn {
+    min-width: 40px;
+    padding: 8px 12px;
+    font-weight: 600;
+}
+
+.catalog-page-btn-active {
+    background: #D59004;
+    color: #fff;
+    border-color: #D59004;
+}
+
+.catalog-page-btn-active:hover {
+    background: #c28103;
+    border-color: #c28103;
+    color: #fff;
+}
+
+.catalog-page-ellipsis {
+    padding: 0 6px;
+    color: #666;
+    font-weight: 600;
+    user-select: none;
 }
 
 .product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     padding: 20px;
 }
 
@@ -889,8 +1059,18 @@ footer {
     font-size: 14px;
     color: #333;
     margin-bottom: 12px;
-    min-height: 40px;
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.catalog-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: #666;
 }
 
 .product-price {
@@ -913,7 +1093,14 @@ footer {
     color: #999;
 }
 
+.price-unavailable {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #8d2c2c;
+}
+
 .product-actions {
+    margin-top: auto;
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
@@ -928,6 +1115,13 @@ footer {
     font-weight: 600;
     border-radius: 10px;
     transition: all 0.2s;
+}
+
+.product-actions .btn:disabled,
+.add-to-cart-modal-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .product-actions .btn:first-child {
@@ -1233,6 +1427,15 @@ footer {
         grid-template-columns: repeat(2, 1fr);
         gap: 24px;
     }
+
+    .footer-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px 24px;
+    }
+
+    .footer-content .footer-section:first-child {
+        max-width: none;
+    }
 }
 
 /* Responsive */
@@ -1268,7 +1471,9 @@ footer {
 
     nav ul li a {
         display: block;
-        padding: 10px 24px;
+        padding: 12px 24px;
+        min-width: auto;
+        font-size: 16px;
     }
 
     .hero-content h1 {
@@ -1323,9 +1528,26 @@ footer {
         grid-template-columns: 1fr;
     }
 
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        text-align: center;
+    }
+
+    .footer-content .footer-section:first-child {
+        align-items: center;
+        max-width: none;
+    }
+
+    .footer-logo {
+        margin-bottom: 12px;
+        margin-left: 0;
+    }
+
     .footer-bottom {
         flex-direction: column;
         text-align: center;
+        gap: 10px;
     }
 }
 
@@ -1534,7 +1756,6 @@ footer {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.3);
     transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
 }
 
 .btn:hover::before {
@@ -1752,3 +1973,5 @@ textarea:focus {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+

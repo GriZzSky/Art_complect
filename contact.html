@@ -105,16 +105,17 @@
     </section>
 
     <!-- Footer -->
+    <!-- Footer -->
     <footer>
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
                     <div class="footer-logo">
                         <div class="footer-logo-icon">
-                            <img src="images/logo.png" alt="АРТ-КОМПЛЕКТ">
+                            <img src="images/LOGO.png" alt="АРТ-КОМПЛЕКТ">
                         </div>
                     </div>
-                    <p>Наш надежный поставщик мебельной фурнитуры. Качество, скорость и индивидуальный подход к каждому клиенту – залог нашего успешного сотрудничества.</p>
+                    <p>Ваш надежный поставщик мебельной фурнитуры. Качество в каждой детали, индивидуальный подход к каждому заказу.</p>
                 </div>
 
                 <div class="footer-section">
@@ -131,35 +132,34 @@
                 <div class="footer-section">
                     <h3>Контакты</h3>
                     <div class="contact-item">
-                        <span>📞</span>
+                        <span class="contact-icon-footer"><i class="fas fa-phone"></i></span>
                         <div>
                             <div>+7 (923) 461 70 28</div>
                             <div>+7 (923) 461 77 97</div>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <span>✉️</span>
-                        <a href="mailto:Аrtcom_yarik@mail.ru" style="color: #ccc;">Аrtcom_yarik@mail.ru</a>
+                        <span class="contact-icon-footer"><i class="fas fa-envelope"></i></span>
+                        <a href="mailto:artcom_yarik@mail.ru">artcom_yarik@mail.ru</a>
                     </div>
                     <div class="contact-item">
-                        <span>📍</span>
-                        <span>г.Новокузнецк<br>пр.Курако, 51а, корп.18</span>
+                        <span class="contact-icon-footer"><i class="fas fa-location-dot"></i></span>
+                        <span>г. Новокузнецк, пр. Курако, 51а корп. 18</span>
                     </div>
                 </div>
 
                 <div class="footer-section">
                     <h3>Режим работы</h3>
-                    <p>Пн-Пт: 09:00 - 18:00<br>
-                    Сб-Вс: Выходной</p>
+                    <p>Пн-Пт: 09:00–18:00<br>Вс-Сб: выходной</p>
                     <div class="social-icons">
-                        <a href="#" class="social-icon">📱</a>
-                        <a href="#" class="social-icon">📧</a>
+                        <a href="#" class="social-icon" title="Написать"><i class="fas fa-paper-plane"></i></a>
                     </div>
                 </div>
             </div>
 
             <div class="footer-bottom">
-                <p>© 2025 АРТ-КОМПЛЕКТ. Все права защищены. | ДОГОВОРИСЬ | ТОП КАТАЛОГОВ | СТУДЕНЧЕСКИЙ</p>
+                <p class="footer-copyright">© 2026 АРТ-КОМПЛЕКТ. Все права защищены.</p>
+                <p class="footer-legal">ИНН: 4217202754 | КПП: 421701001 | ОГРН: 1214200011937</p>
             </div>
         </div>
     </footer>
@@ -173,7 +173,7 @@
         ymaps.ready(init);
         function init(){
             var myMap = new ymaps.Map("yandex-map", {
-                center: [53.7557, 87.1099],
+                center: [53.76296, 87.092814],
                 zoom: 16,
                 controls: ['zoomControl', 'typeSelector', 'fullscreenControl']
             });
@@ -201,7 +201,7 @@
                 },
                 function (err) {
                     // Если геокодирование не удалось, используем примерные координаты
-                    var myPlacemark = new ymaps.Placemark([53.7557, 87.1099], {
+                    var myPlacemark = new ymaps.Placemark([53.76296, 87.092814], {
                         balloonContentHeader: "АРТ-КОМПЛЕКТ",
                         balloonContentBody: "г.Новокузнецк<br>пр.Курако, 51а, корп.18",
                         balloonContentFooter: "Пн-Пт: 09:00 - 18:00",
