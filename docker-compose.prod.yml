@@ -1,0 +1,74 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./deploy/traefik/acme.json:/letsencrypt/acme.json"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./ART_COMPL-BACKEND
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/artcomplect
+      - FTP_HOST=${FTP_HOST:-}
+      - FTP_PORT=${FTP_PORT:-21}
+      - FTP_USER=${FTP_USER:-}
+      - FTP_PASSWORD=${FTP_PASSWORD:-}
+      - FTP_REMOTE_PATH=${FTP_REMOTE_PATH:-/}
+      - FTP_PRODUCT_XML_FILENAME=${FTP_PRODUCT_XML_FILENAME:-import0_1.xml}
+      - FTP_PRICE_XML_FILENAME=${FTP_PRICE_XML_FILENAME:-offers0_1.xml}
+      - PRODUCT_CATALOG_XML_DIR=${PRODUCT_CATALOG_XML_DIR:-/app/ftp_product_catalog_xml}
+      - PRICE_OFFERS_XML_DIR=${PRICE_OFFERS_XML_DIR:-/app/ftp_price_offers_xml}
+      - PRODUCT_IMAGES_DIR=${PRODUCT_IMAGES_DIR:-/app/ftp_product_images}
+      - PROCESSED_PRODUCT_XML_DIR=${PROCESSED_PRODUCT_XML_DIR:-/app/data/processed_feeds/product_catalog_xml}
+      - PROCESSED_PRICE_XML_DIR=${PROCESSED_PRICE_XML_DIR:-/app/data/processed_feeds/price_offers_xml}
+      - LOGS_DIR=${LOGS_DIR:-/app/data/logs}
+      - SYNC_LOCK_FILE=${SYNC_LOCK_FILE:-/app/data/sync/catalog_sync.lock}
+    volumes:
+      - ./ART_COMPL-BACKEND/data:/app/data
+      - ./ftp_product_catalog_xml:/app/ftp_product_catalog_xml
+      - ./ftp_price_offers_xml:/app/ftp_price_offers_xml
+      - ./ftp_product_images:/app/ftp_product_images
+      - ./FRONT:/app/static:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.art.rule=Host(`art-komplekt.shop`,`www.art-komplekt.shop`)"
+      - "traefik.http.routers.art.entrypoints=websecure"
+      - "traefik.http.routers.art.tls.certresolver=le"
+      - "traefik.http.services.art.loadbalancer.server.port=8000"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: artcomplect
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d artcomplect"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
