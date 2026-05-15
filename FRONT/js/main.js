@@ -88,7 +88,7 @@ class ShoppingCart {
             cartContainer.innerHTML = `
                 <div class="alert alert-info text-center">
                     <h4>Корзина пуста</h4>
-                    <p>Добавьте товары из <a href="catalog.html">каталога</a></p>
+                    <p>Добавьте товары из <a href="/catalog">каталога</a></p>
                 </div>
             `;
             if (cartSummary) cartSummary.style.display = 'none';

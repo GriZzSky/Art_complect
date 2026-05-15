@@ -78,7 +78,23 @@ static_dir = Path(__file__).resolve().parent.parent / "static"
 if static_dir.exists():
     @app.get("/")
     async def root():
-        return RedirectResponse("/index.html")
+        return RedirectResponse("/index.html", status_code=301)
+
+    pretty_pages = {
+        "/index": "/index.html",
+        "/catalog": "/catalog.html",
+        "/services": "/services.html",
+        "/promo": "/promo.html",
+        "/about": "/about.html",
+        "/contact": "/contact.html",
+        "/cart": "/cart.html",
+        "/404": "/404.html",
+    }
+
+    for path, target in pretty_pages.items():
+        @app.get(path, include_in_schema=False)
+        async def _redirect(target=target):
+            return RedirectResponse(target, status_code=301)
 
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 else:

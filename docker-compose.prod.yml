@@ -1,22 +1,15 @@
 services:
-  traefik:
-    image: traefik:v3.1
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}"
-      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+  caddy:
+    image: caddy:2.8
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./deploy/traefik/acme.json:/letsencrypt/acme.json"
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/caddy/data:/data
+      - ./deploy/caddy/config:/config
     restart: unless-stopped
 
   api:
@@ -47,12 +40,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.art.rule=Host(`art-komplekt.shop`,`www.art-komplekt.shop`)"
-      - "traefik.http.routers.art.entrypoints=websecure"
-      - "traefik.http.routers.art.tls.certresolver=le"
-      - "traefik.http.services.art.loadbalancer.server.port=8000"
     restart: unless-stopped
 
   db:
