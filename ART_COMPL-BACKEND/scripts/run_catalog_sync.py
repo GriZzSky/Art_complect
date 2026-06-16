@@ -8,7 +8,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.catalog.catalog_sync_service import run_sync
-from app.core.config import get_settings
 
 
 def main():
@@ -35,16 +34,9 @@ def main():
             print("No .xml files in", directory)
             sys.exit(1)
         xml_path = files[0]
-    else:
-        default_dir = Path(get_settings().PRODUCT_CATALOG_XML_DIR)
-        if default_dir.exists():
-            files = sorted(
-                [path for path in default_dir.rglob("*.xml") if path.is_file()],
-                key=lambda path: path.stat().st_mtime,
-                reverse=True,
-            )
-            if files:
-                xml_path = files[0]
+    # Без аргументов оставляем xml_path=None: резолвер сам выберет каталог по имени
+    # (FTP_PRODUCT_XML_FILENAME, например import0_1.xml). Иначе при папке, где рядом
+    # лежат и каталог, и прайс (webdata), выбор «самого свежего .xml» мог взять offers.
 
     result = asyncio.run(run_sync(download_from_ftp=args.ftp, xml_path=xml_path))
     if result["success"]:

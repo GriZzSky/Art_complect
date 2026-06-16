@@ -12,6 +12,7 @@ class Product(Base):
     code = Column(String(64), nullable=True, index=True)
     name = Column(Text, nullable=False)
     category_slug = Column(String(64), nullable=True, index=True)
+    category_name = Column(String(255), nullable=True)
     unit = Column(String(16), nullable=True)
     coefficient = Column(Float, default=1.0)
     price = Column(Float, nullable=True)

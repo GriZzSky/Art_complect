@@ -17,13 +17,19 @@ services:
       - PRODUCT_IMAGES_DIR=${PRODUCT_IMAGES_DIR:-/app/ftp_product_images}
       - PROCESSED_PRODUCT_XML_DIR=${PROCESSED_PRODUCT_XML_DIR:-/app/data/processed_feeds/product_catalog_xml}
       - PROCESSED_PRICE_XML_DIR=${PROCESSED_PRICE_XML_DIR:-/app/data/processed_feeds/price_offers_xml}
+      # webdata — единственный источник данных, монтируется только на чтение,
+      # поэтому архивацию (перемещение исходников) отключаем.
+      - ARCHIVE_SOURCE_FILES=${ARCHIVE_SOURCE_FILES:-false}
       - LOGS_DIR=${LOGS_DIR:-/app/data/logs}
       - SYNC_LOCK_FILE=${SYNC_LOCK_FILE:-/app/data/sync/catalog_sync.lock}
     volumes:
       - ./data:/app/data
-      - ../ftp_product_catalog_xml:/app/ftp_product_catalog_xml
-      - ../ftp_price_offers_xml:/app/ftp_price_offers_xml
-      - ../ftp_product_images:/app/ftp_product_images
+      # Каталог, цены и фото читаются напрямую из webdata (новые выгрузки 1С
+      # достаточно положить сюда). import0_1.xml и offers0_1.xml лежат рядом,
+      # фото — в подпапке import_files.
+      - ../webdata:/app/ftp_product_catalog_xml:ro
+      - ../webdata:/app/ftp_price_offers_xml:ro
+      - ../webdata/import_files:/app/ftp_product_images:ro
       - ../FRONT:/app/static
     depends_on:
       db:

@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     PROCESSED_PRODUCT_XML_DIR: str = "data/processed_feeds/product_catalog_xml"
     PROCESSED_PRICE_XML_DIR: str = "data/processed_feeds/price_offers_xml"
 
+    # После успешной синхронизации исходные XML перемещаются в архив.
+    # Когда источник — постоянная папка (webdata, только на чтение), архивацию
+    # нужно отключить, иначе файлы будут «съедены» из исходной папки.
+    ARCHIVE_SOURCE_FILES: bool = True
+
     LOGS_DIR: str = "data/logs"
     SYNC_LOCK_FILE: str = "data/sync/catalog_sync.lock"
     SYNC_LOCK_TIMEOUT_SEC: int = 3600

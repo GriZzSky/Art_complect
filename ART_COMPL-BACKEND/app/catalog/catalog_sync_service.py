@@ -221,10 +221,11 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
                 result["message"] = str(exc)
                 return result
 
-        if _should_archive_source(product_catalog_path, product_upload_dir, product_archive_dir):
-            archive_file(product_catalog_path, product_archive_dir)
-        if price_offers_path is not None and _should_archive_source(price_offers_path, price_upload_dir, price_archive_dir):
-            archive_file(price_offers_path, price_archive_dir)
+        if settings.ARCHIVE_SOURCE_FILES:
+            if _should_archive_source(product_catalog_path, product_upload_dir, product_archive_dir):
+                archive_file(product_catalog_path, product_archive_dir)
+            if price_offers_path is not None and _should_archive_source(price_offers_path, price_upload_dir, price_archive_dir):
+                archive_file(price_offers_path, price_archive_dir)
 
         refresh_image_index()
         result["success"] = True

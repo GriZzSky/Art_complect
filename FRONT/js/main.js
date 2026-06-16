@@ -335,6 +335,22 @@ class HeroSlider {
                 this.startAutoplay();
             });
         });
+
+        // Свайп-навигация на тач-устройствах
+        const hero = document.querySelector('.hero');
+        if (hero) {
+            let touchStartX = 0;
+            hero.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+            hero.addEventListener('touchend', (e) => {
+                const dx = e.changedTouches[0].screenX - touchStartX;
+                if (Math.abs(dx) < 40) return; // игнорируем случайные касания
+                this.stopAutoplay();
+                if (dx < 0) this.nextSlide(); else this.prevSlide();
+                this.startAutoplay();
+            }, { passive: true });
+        }
     }
 }
 
@@ -353,16 +369,16 @@ class ProductFilter {
         if (!this.searchInput) return;
 
         this.searchInput.addEventListener('input', (e) => {
-            this.filterProducts(e.target.value.toLowerCase());
+            const searchTerm = e.target.value.trim();
+            // Поиск идёт на сервере (параметр q с debounce). Фронтовый фильтр —
+            // только запасной путь, если каталог не загружен с API.
+            if (window.catalogLoader && typeof window.catalogLoader.setSearch === 'function') {
+                window.catalogLoader.setSearch(searchTerm);
+                return;
+            }
+            this.filterProducts(searchTerm.toLowerCase());
         });
-
-        this.categoryFilters.forEach(filter => {
-            filter.addEventListener('click', () => {
-                const slug = filter.dataset.filter;
-                if (window.catalogLoader) window.catalogLoader.setCategory(slug || 'all');
-                if (slug === 'all' && this.searchInput) this.searchInput.value = '';
-            });
-        });
+        // Категории обрабатываются в initCatalogSidebar (список грузится с бэкенда).
     }
 
     refreshProducts() {
@@ -394,10 +410,16 @@ class CatalogLoader {
         this.grid = document.getElementById('products-grid');
         this.paginationEl = document.getElementById('catalog-pagination');
         this.loadingEl = document.getElementById('catalog-loading');
+        this.searchInput = document.getElementById('product-search');
         this.currentPage = 1;
         this.totalCount = 0;
         this.currentCategory = null;
+        this.currentSearch = '';
+        this.searchDebounceTimer = null;
         if (this.grid) {
+            if (this.searchInput) {
+                this.currentSearch = this.searchInput.value.trim();
+            }
             this.loadPage(1);
             this.paginationEl && this.paginationEl.addEventListener('click', this.onPaginationClick.bind(this));
         }
@@ -406,6 +428,16 @@ class CatalogLoader {
     setCategory(categorySlug) {
         this.currentCategory = categorySlug === 'all' || !categorySlug ? null : categorySlug;
         this.loadPage(1);
+    }
+
+    setSearch(searchTerm) {
+        this.currentSearch = searchTerm.trim();
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
+        }
+        this.searchDebounceTimer = setTimeout(() => {
+            this.loadPage(1);
+        }, 250);
     }
 
     onPaginationClick(e) {
@@ -435,6 +467,7 @@ class CatalogLoader {
         const skip = (page - 1) * CATALOG_PAGE_SIZE;
         const params = new URLSearchParams({ skip: String(skip), limit: String(CATALOG_PAGE_SIZE), active_only: 'true' });
         if (this.currentCategory) params.set('category', this.currentCategory);
+        if (this.currentSearch) params.set('q', this.currentSearch);
         try {
             const res = await fetch(`${API_BASE}/api/products?${params.toString()}`);
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -457,7 +490,9 @@ class CatalogLoader {
     renderCards(products) {
         if (!this.grid) return;
         if (!products.length) {
-            this.grid.innerHTML = '<div class="catalog-empty">В этой категории пока нет товаров.</div>';
+            this.grid.innerHTML = this.currentSearch
+                ? '<div class="catalog-empty">По вашему запросу ничего не найдено.</div>'
+                : '<div class="catalog-empty">В этой категории пока нет товаров.</div>';
             return;
         }
         const fragment = document.createDocumentFragment();
@@ -473,7 +508,7 @@ class CatalogLoader {
             const hasPrice = inStock && price > 0;
             const imageUrl = resolveApiUrl(p.image_url || '');
             const imageHtml = imageUrl
-                ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-image">`
+                ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" class="product-image" loading="lazy">`
                 : '<div class="product-image product-image-placeholder"><i class="fas fa-box"></i><span>Нет изображения</span></div>';
             const badgeLabel = inStock ? 'В наличии' : 'Нет в наличии';
             const badgeClass = inStock ? 'product-badge' : 'product-badge product-badge-out';
@@ -550,6 +585,72 @@ class CatalogLoader {
             </div>
         `;
     }
+}
+
+// ==========================================
+// 3.2. БОКОВОЙ СПИСОК КАТЕГОРИЙ (из классификатора, с бэкенда)
+// ==========================================
+async function initCatalogSidebar() {
+    const list = document.getElementById('category-filter-list');
+    if (!list) return;
+
+    // Загружаем реальные категории каталога и счётчики товаров.
+    try {
+        const res = await fetch(`${API_BASE}/api/products/categories?active_only=true`);
+        if (res.ok) {
+            const data = await res.json();
+            const items = Array.isArray(data.items) ? data.items : [];
+
+            const allLi = list.querySelector('li[data-filter="all"]');
+            if (allLi && !allLi.querySelector('.filter-count')) {
+                const badge = document.createElement('span');
+                badge.className = 'filter-count';
+                badge.textContent = data.total || 0;
+                allLi.appendChild(badge);
+            }
+
+            const fragment = document.createDocumentFragment();
+            items.forEach(cat => {
+                if (!cat || !cat.slug) return;
+                const li = document.createElement('li');
+                li.dataset.filter = cat.slug;
+                li.innerHTML = `<span>${escapeHtml(cat.name || cat.slug)}</span><span class="filter-count">${cat.count || 0}</span>`;
+                fragment.appendChild(li);
+            });
+            list.appendChild(fragment);
+        }
+    } catch (err) {
+        // Сайдбар остаётся с пунктом «Все товары»; каталог всё равно работает.
+    }
+
+    // Делегирование кликов: работает и для динамически добавленных пунктов.
+    list.addEventListener('click', (e) => {
+        const li = e.target.closest('li[data-filter]');
+        if (!li) return;
+        list.querySelectorAll('li.active').forEach(el => el.classList.remove('active'));
+        li.classList.add('active');
+
+        const slug = li.dataset.filter || 'all';
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) searchInput.value = '';
+        if (window.catalogLoader) {
+            window.catalogLoader.currentSearch = '';
+            window.catalogLoader.setCategory(slug);
+        }
+
+        // На мобильных сворачиваем список категорий и показываем товары,
+        // чтобы выбор давал понятный результат (а не оставлял длинный список).
+        if (window.innerWidth <= 767) {
+            const fg = li.closest('.filter-group');
+            if (fg) {
+                fg.classList.remove('is-open');
+                const tgl = fg.querySelector('.filter-group-toggle');
+                if (tgl) tgl.setAttribute('aria-expanded', 'false');
+            }
+            const grid = document.getElementById('products-grid');
+            if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
 }
 
 // ==========================================
@@ -682,6 +783,52 @@ function initCatalogAccordion() {
 }
 
 // ==========================================
+// 7.3. МОБИЛЬНОЕ МЕНЮ (БУРГЕР)
+// ==========================================
+function initMobileNav() {
+    const toggle = document.querySelector('.nav-toggle');
+    const headerTop = document.querySelector('.header-top');
+    if (!toggle || !headerTop) return;
+
+    const nav = headerTop.querySelector('nav');
+
+    const closeMenu = () => {
+        headerTop.classList.remove('nav-open');
+        toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = headerTop.classList.toggle('nav-open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    // Клик по пункту меню — закрываем панель.
+    if (nav) {
+        nav.addEventListener('click', (e) => {
+            if (e.target.closest('a')) closeMenu();
+        });
+    }
+
+    // Клик вне шапки закрывает меню.
+    document.addEventListener('click', (e) => {
+        if (headerTop.classList.contains('nav-open') && !headerTop.contains(e.target)) {
+            closeMenu();
+        }
+    });
+
+    // Esc закрывает меню.
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+
+    // Возврат на десктоп — сбрасываем состояние, чтобы меню не осталось «открытым».
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 992) closeMenu();
+    });
+}
+
+// ==========================================
 // 8. STICKY HEADER
 // ==========================================
 function initStickyHeader() {
@@ -765,12 +912,27 @@ document.addEventListener('DOMContentLoaded', () => {
         window.catalogLoader = new CatalogLoader();
     }
 
+    // Боковой список категорий каталога (грузится с бэкенда по классификатору)
+    if (document.getElementById('category-filter-list')) {
+        initCatalogSidebar();
+        // На мобильных фильтр категорий стартует свёрнутым, чтобы не оттеснять товары
+        if (window.innerWidth <= 767) {
+            const fg = document.querySelector('.sidebar .filter-group-all');
+            if (fg) {
+                fg.classList.remove('is-open');
+                const tgl = fg.querySelector('.filter-group-toggle');
+                if (tgl) tgl.setAttribute('aria-expanded', 'false');
+            }
+        }
+    }
+
     // Аккордеон категорий в сайдбаре каталога
     if (document.querySelector('.filter-group-toggle')) {
         initCatalogAccordion();
     }
 
     // Общие инициализации
+    initMobileNav();
     initSmoothScroll();
     initScrollAnimations();
     initStickyHeader();

@@ -1,15 +1,55 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, Query, Response
-from sqlalchemy import func, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import Product
 from app.catalog.product_image_registry import get_product_image_url
-from app.catalog.schemas import ProductResponse
+from app.catalog.schemas import CategoryListResponse, CategoryResponse, ProductResponse
 from app.core.database import get_db
 
 router = APIRouter(prefix="/products", tags=["catalog-products"])
+
+CATEGORY_LABELS = {
+    "kley": "Клей",
+    "styazhki": "Стяжки",
+    "napravlyayushchie-sistemy": "Направляющие системы",
+    "napravlyayushchie": "Направляющие",
+    "petli": "Петли",
+    "ruchki": "Ручки",
+    "gazlifty": "Газлифты",
+    "kromka-ldsp": "Кромка ЛДСП",
+    "moyki": "Мойки",
+    "smesiteli": "Смесители",
+    "profili": "Профили",
+    "stopory": "Стопоры",
+    "polkoderzhateli": "Полкодержатели",
+    "plunzhery": "Плунжеры",
+    "ugolki": "Уголки",
+    "sushki": "Сушки",
+    "paneli-zadnie": "Панели задние",
+    "krepezh": "Крепеж",
+    "samorezy": "Саморезы",
+    "podstavki": "Подставки",
+    "nozhki": "Ножки",
+    "stoleshnitsy": "Столешницы",
+    "pilomaterialy": "Пиломатериалы",
+    "elektroinstrument": "Электроинструмент",
+    "zaglushki": "Заглушки",
+    "plintusy": "Плинтусы",
+    "vnutrennee-napolnenie": "Наполнение шкафов",
+    "truby-flantsy": "Трубы и фланцы",
+    "paneli-plity": "Панели и плиты",
+    "razdvizhnye": "Раздвижные системы",
+    "konstruktorskaya": "Конструкторские системы",
+}
+
+
+def get_category_label(slug: str | None) -> str:
+    if not slug:
+        return "Другое"
+    return CATEGORY_LABELS.get(slug, slug.replace("-", " ").title())
 
 
 def serialize_product(product: Product) -> ProductResponse:
@@ -18,31 +58,115 @@ def serialize_product(product: Product) -> ProductResponse:
     return ProductResponse(**payload)
 
 
+def _build_search_clause(query: str):
+    # Каждое слово запроса должно встретиться (AND), но в любом из полей —
+    # имя, код или внешний ИД (OR). Это даёт нормальный полнотекстовый поиск
+    # по нескольким словам в произвольном порядке.
+    terms = [term.strip() for term in query.split() if term.strip()]
+    if not terms:
+        return None
+
+    term_clauses = []
+    for term in terms:
+        pattern = f"%{term}%"
+        term_clauses.append(
+            or_(
+                Product.name.ilike(pattern),
+                Product.code.ilike(pattern),
+                Product.external_id.ilike(pattern),
+            )
+        )
+    return and_(*term_clauses)
+
+
+# Товары в наличии всегда выше отсутствующих — это первичный ключ сортировки
+# и в поиске, и при просмотре категории, несмотря на алфавитный порядок.
+_IN_STOCK_FIRST = case((Product.in_stock == True, 0), else_=1)
+
+
+def _build_search_ordering(query: str):
+    normalized = query.strip().lower()
+    if not normalized:
+        return [_IN_STOCK_FIRST, Product.name.asc()]
+
+    prefix = f"{normalized}%"
+    word_prefix = f"% {normalized}%"
+    exact = normalized
+    relevance = case(
+        (func.lower(Product.code) == exact, 0),
+        (func.lower(Product.name) == exact, 1),
+        (func.lower(Product.name).like(prefix), 2),
+        (func.lower(Product.name).like(word_prefix), 3),
+        (func.lower(Product.code).like(prefix), 4),
+        else_=5,
+    )
+    return [_IN_STOCK_FIRST, relevance, Product.name.asc()]
+
+
 @router.get("", response_model=List[ProductResponse])
 async def list_products(
     response: Response,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     category: str | None = Query(None, description="?????? ?? category_slug"),
+    q: str | None = Query(None, description="Search by name, code, or external id"),
     active_only: bool = True,
     db: AsyncSession = Depends(get_db),
 ):
-    count_query = select(func.count()).select_from(Product)
+    filters = []
     if active_only:
-        count_query = count_query.where(Product.is_active == True)
+        filters.append(Product.is_active == True)
     if category:
-        count_query = count_query.where(Product.category_slug == category)
+        filters.append(Product.category_slug == category)
+    if q:
+        search_clause = _build_search_clause(q)
+        if search_clause is not None:
+            filters.append(search_clause)
+
+    count_query = select(func.count()).select_from(Product)
+    if filters:
+        count_query = count_query.where(*filters)
     total = (await db.execute(count_query)).scalar() or 0
     response.headers["X-Total-Count"] = str(total)
 
-    query = select(Product).offset(skip).limit(limit)
-    if active_only:
-        query = query.where(Product.is_active == True)
-    if category:
-        query = query.where(Product.category_slug == category)
+    query = select(Product)
+    if filters:
+        query = query.where(*filters)
+    query = query.order_by(*_build_search_ordering(q or "")).offset(skip).limit(limit)
 
     products = (await db.execute(query)).scalars().all()
     return [serialize_product(product) for product in products]
+
+
+@router.get("/categories", response_model=CategoryListResponse)
+async def list_categories(
+    active_only: bool = True,
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(
+        Product.category_slug,
+        func.max(Product.category_name),
+        func.count(),
+    ).select_from(Product)
+    if active_only:
+        query = query.where(Product.is_active == True)
+    query = query.group_by(Product.category_slug)
+
+    rows = (await db.execute(query)).all()
+    items: list[CategoryResponse] = []
+    total = 0
+    for slug, name, count in rows:
+        total += count or 0
+        items.append(CategoryResponse(
+            slug=slug or "other",
+            # Имя категории берём из классификатора (category_name); для старых
+            # записей без него — из словаря меток по slug.
+            name=name or get_category_label(slug),
+            count=int(count or 0),
+        ))
+
+    items.sort(key=lambda item: item.count, reverse=True)
+    return CategoryListResponse(total=total, items=items)
 
 
 @router.get("/{external_id}", response_model=ProductResponse | None)

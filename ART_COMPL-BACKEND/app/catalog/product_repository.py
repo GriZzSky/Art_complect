@@ -32,7 +32,10 @@ async def bulk_upsert(
             existing = (
                 await session.execute(select(Product).where(Product.external_id == product.external_id))
             ).scalars().first()
-            category_slug = get_category_slug(product.name)
+            # Категория берётся из классификатора (product.category_slug); если товар
+            # не привязан к группе, падаем на старый подбор по ключевым словам.
+            category_slug = product.category_slug or get_category_slug(product.name)
+            category_name = product.category_name
             offer = offers_by_id.get(product.external_id) if offers_by_id else None
 
             if existing:
@@ -41,6 +44,7 @@ async def bulk_upsert(
                 existing.unit = product.unit
                 existing.coefficient = product.coefficient
                 existing.category_slug = category_slug
+                existing.category_name = category_name
                 if offer is not None:
                     existing.price = offer.price
                     existing.quantity = offer.quantity
@@ -55,6 +59,7 @@ async def bulk_upsert(
                         code=product.code,
                         name=product.name,
                         category_slug=category_slug,
+                        category_name=category_name,
                         unit=product.unit,
                         coefficient=product.coefficient,
                         price=offer.price if offer is not None else None,

@@ -8,6 +8,7 @@ class ProductBase(BaseModel):
     code: Optional[str] = None
     name: str
     category_slug: Optional[str] = None
+    category_name: Optional[str] = None
     unit: Optional[str] = None
     coefficient: float = 1.0
     price: Optional[float] = None
@@ -23,3 +24,14 @@ class ProductResponse(ProductBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = {"from_attributes": True}
+
+
+class CategoryResponse(BaseModel):
+    slug: str
+    name: str
+    count: int
+
+
+class CategoryListResponse(BaseModel):
+    total: int
+    items: list[CategoryResponse]

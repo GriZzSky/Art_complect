@@ -9,6 +9,20 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #333;
     line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Адаптивные изображения: никогда не выходят за пределы контейнера */
+img {
+    max-width: 100%;
+}
+
+/* Длинные строки (реквизиты, email) переносятся, а не растягивают верстку */
+.footer-legal,
+.footer-copyright,
+.contact-item a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .container {
@@ -150,10 +164,61 @@ nav ul li a.active {
     border-color: rgba(213, 144, 4, 0.3);
 }
 
+/* Бургер-кнопка мобильного меню — скрыта на десктопе */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+}
+
+.nav-toggle:hover {
+    background: rgba(213, 144, 4, 0.15);
+    border-color: rgba(213, 144, 4, 0.3);
+}
+
+/* Анимация бургер → крестик при открытом меню */
+.header-top.nav-open .nav-toggle span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.header-top.nav-open .nav-toggle span:nth-child(2) {
+    opacity: 0;
+}
+
+.header-top.nav-open .nav-toggle span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Телефоны внутри меню показываем только на мобильных */
+.nav-phone {
+    display: none;
+}
+
 /* Hero Section */
 .hero {
     position: relative;
-    height: 500px;
+    height: 56vh;
+    min-height: 400px;
+    max-height: 600px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -173,14 +238,15 @@ nav ul li a.active {
 }
 
 .hero-content h1 {
-    font-size: 48px;
+    font-size: clamp(1.75rem, 5vw, 3rem);
     margin-bottom: 15px;
     font-weight: 700;
 }
 
 .hero-content p {
-    font-size: 18px;
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
     margin-bottom: 30px;
+    max-width: 640px;
 }
 
 .slider-nav {
@@ -826,12 +892,20 @@ footer .footer-logo-icon img {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     cursor: pointer;
     padding: 10px 14px;
     border-radius: 10px;
     transition: background 0.2s, color 0.2s;
     color: #333;
     font-size: 14px;
+}
+
+/* Название категории занимает доступную ширину и может переноситься,
+   не наезжая на бейдж со счётчиком */
+.filter-group ul li > span:first-child {
+    min-width: 0;
+    flex: 1;
 }
 
 .filter-group ul li:hover {
@@ -852,15 +926,38 @@ footer .footer-logo-icon img {
 }
 
 .filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 8px;
     background: linear-gradient(135deg, #D59004 0%, #b87a03 100%);
     color: #fff;
-    padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
-    min-width: 28px;
+    line-height: 1;
     text-align: center;
     box-shadow: 0 2px 8px rgba(213, 144, 4, 0.25);
+}
+
+/* Список всех категорий раскрывается полностью; прокрутка — у самого сайдбара */
+.filter-group.filter-group-all.is-open .filter-group-content {
+    max-height: none;
+}
+
+/* Активная категория подсвечивается */
+.filter-group ul li.active {
+    background: linear-gradient(135deg, rgba(213, 144, 4, 0.16) 0%, rgba(213, 144, 4, 0.06) 100%);
+    color: #12142B;
+    font-weight: 700;
+}
+
+.filter-group ul li.active .filter-count {
+    box-shadow: 0 2px 10px rgba(213, 144, 4, 0.4);
 }
 
 .products-grid {
@@ -1422,7 +1519,37 @@ footer .footer-logo-icon img {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-@media (max-width: 992px) {
+/* ===== Десктоп 1024–1439px: компактная шапка, чтобы меню влезало в строку ===== */
+@media (min-width: 1024px) and (max-width: 1439.98px) {
+    .header-top {
+        gap: 14px;
+    }
+
+    .logo-icon {
+        height: 72px;
+    }
+
+    nav ul {
+        gap: 2px;
+    }
+
+    nav ul li a {
+        padding: 10px 14px;
+        min-width: auto;
+        font-size: 15px;
+    }
+
+    .header-contacts {
+        gap: 2px;
+    }
+
+    .phone-number {
+        font-size: 13px;
+    }
+}
+
+/* ===== Планшеты (768–1023px) ===== */
+@media (max-width: 1023.98px) {
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 24px;
@@ -1436,48 +1563,135 @@ footer .footer-logo-icon img {
     .footer-content .footer-section:first-child {
         max-width: none;
     }
-}
 
-/* Responsive */
-@media (max-width: 768px) {
+    /* Карточки товаров: 2–3 колонки на планшете */
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 24px;
+    }
+
+    /* ===== Шапка → бургер-меню на планшетах и телефонах ===== */
     .header-top {
-        grid-template-columns: 1fr;
-        gap: 16px;
-        text-align: center;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .logo-icon {
+        height: 64px;
     }
 
     .header-top .logo {
-        justify-self: center;
-    }
-
-    header .header-top nav {
-        justify-self: center;
+        justify-self: auto;
+        order: 1;
     }
 
     .header-right {
-        justify-self: center;
+        order: 2;
+        justify-self: auto;
         flex-direction: row;
+        align-items: center;
+        gap: 12px;
     }
 
+    /* Телефоны убираем из шапки — они доступны в выпадающем меню */
     .header-contacts {
-        align-items: center;
+        display: none;
+    }
+
+    .nav-toggle {
+        display: flex;
+        order: 3;
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Тач-зоны не меньше 44×44px */
+    .cart-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Навигация сворачивается в выпадающую панель под шапкой */
+    body > header .header-top nav {
+        order: 4;
+        flex-basis: 100%;
+        width: 100%;
+        justify-self: auto;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s ease;
+    }
+
+    body > header .header-top.nav-open nav {
+        max-height: 80vh;
+        overflow-y: auto;
     }
 
     nav ul {
         flex-direction: column;
         gap: 4px;
-        text-align: center;
+        text-align: left;
+        padding: 6px 0 14px;
     }
 
     nav ul li a {
         display: block;
-        padding: 12px 24px;
+        padding: 14px 16px;
         min-width: auto;
         font-size: 16px;
+        border-radius: 8px;
     }
 
-    .hero-content h1 {
-        font-size: 32px;
+    .nav-phone {
+        display: block;
+    }
+
+    .nav-phone a {
+        color: #D59004;
+        font-weight: 600;
+    }
+
+    .nav-phone a i {
+        margin-right: 8px;
+    }
+}
+
+/* ===== Мобильные (≤767px) ===== */
+@media (max-width: 767.98px) {
+    /* Шапка/бургер настраиваются в блоке max-width: 1023.98px;
+       здесь — уплотнение под телефоны. */
+    .logo-icon {
+        height: 56px;
+    }
+
+    .section {
+        padding: 40px 0;
+    }
+
+    /* Hero компактнее, стрелки меньше */
+    .hero {
+        height: 44vh;
+        min-height: 320px;
+    }
+
+    .hero-content {
+        padding: 24px 18px;
+    }
+
+    .slider-arrow {
+        font-size: 22px;
+        padding: 6px 10px;
+    }
+
+    .slider-arrow.prev {
+        left: 8px;
+    }
+
+    .slider-arrow.next {
+        right: 8px;
     }
 
     .catalog-header {
@@ -1489,12 +1703,20 @@ footer .footer-logo-icon img {
         max-width: none;
     }
 
+    /* Одна колонка: block надёжнее grid (сайдбар — первый в DOM, идёт сверху) */
     .catalog-container {
-        grid-template-columns: 1fr;
+        display: block;
     }
 
+    /* Фильтр категорий над товарами; на мобильных стартует свёрнутым через JS */
     .sidebar {
-        order: 2;
+        width: auto;
+        max-height: none;
+        margin-bottom: 16px;
+    }
+
+    .products-grid {
+        margin-top: 0;
     }
 
     .cart-item {
@@ -1523,9 +1745,25 @@ footer .footer-logo-icon img {
         padding: 26px 22px 30px;
     }
 
-    .products-grid,
+    /* Товары: 2 колонки, на самых узких — 1 (см. блок ≤479px) */
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
     .promo-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* CTA-кнопки — друг под другом на всю ширину */
+    .cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cta-buttons .btn {
+        width: 100%;
+        min-width: 0;
     }
 
     .footer-content {
@@ -1548,6 +1786,33 @@ footer .footer-logo-icon img {
         flex-direction: column;
         text-align: center;
         gap: 10px;
+    }
+}
+
+/* ===== Маленькие телефоны (≤479px) ===== */
+@media (max-width: 479.98px) {
+    .logo-icon {
+        height: 50px;
+    }
+
+    .container {
+        padding: 0 16px;
+    }
+
+    /* Товары в одну колонку на узких экранах */
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Сетка карточек 2-в-ряд (услуги, акции) — сворачивается в одну колонку на мобильных */
+.cards-2col {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 767.98px) {
+    .cards-2col {
+        grid-template-columns: 1fr;
     }
 }
 

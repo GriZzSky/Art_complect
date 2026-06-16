@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.api import catalog_products, catalog_sync
-from app.catalog.category_rules import get_category_slug
 from app.catalog.catalog_sync_service import run_sync
 from app.catalog.product_image_registry import (
     PRODUCT_IMAGES_ROUTE_PREFIX,
@@ -28,16 +27,11 @@ async def lifespan(app: FastAPI):
         await connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS price DOUBLE PRECISION"))
         await connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity DOUBLE PRECISION NOT NULL DEFAULT 0"))
         await connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS in_stock BOOLEAN NOT NULL DEFAULT FALSE"))
+        await connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS category_name VARCHAR(255)"))
         await connection.execute(text("CREATE INDEX IF NOT EXISTS ix_products_category_slug ON products (category_slug)"))
 
-        rows = await connection.execute(text("SELECT id, name FROM products"))
-        for row in rows.fetchall():
-            product_id, name = row[0], (row[1] or "")
-            slug = get_category_slug(name)
-            await connection.execute(
-                text("UPDATE products SET category_slug = :slug WHERE id = :id"),
-                {"slug": slug, "id": product_id},
-            )
+        # Категории берутся из классификатора во время синхронизации каталога,
+        # поэтому больше не переопределяем их по ключевым словам на старте.
 
     async with engine.connect() as connection:
         total_products = (await connection.execute(text("SELECT COUNT(*) FROM products"))).scalar() or 0
