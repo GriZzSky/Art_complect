@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /cart
+Disallow: /404
+Sitemap: https://art-komplekt.shop/sitemap.xml

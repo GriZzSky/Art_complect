@@ -1,0 +1,24 @@
+{
+    email {$LETSENCRYPT_EMAIL}
+}
+
+art-komplekt.shop, www.art-komplekt.shop {
+    @html path_regexp html ^/(index|catalog|services|promo|about|contact|cart|404)\.html$
+    redir @html /{http.regexp.html.1} 301
+
+    @root path /
+    rewrite @root /index.html
+
+    @pages path /index /catalog /services /promo /about /contact /cart /404
+    rewrite @pages {path}.html
+
+    encode gzip zstd
+    reverse_proxy api:8000
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

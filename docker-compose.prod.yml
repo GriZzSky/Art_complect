@@ -1,0 +1,67 @@
+services:
+  caddy:
+    image: caddy:2.8
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/caddy/data:/data
+      - ./deploy/caddy/config:/config
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./ART_COMPL-BACKEND
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/artcomplect
+      - FTP_HOST=${FTP_HOST:-}
+      - FTP_PORT=${FTP_PORT:-21}
+      - FTP_USER=${FTP_USER:-}
+      - FTP_PASSWORD=${FTP_PASSWORD:-}
+      - FTP_REMOTE_PATH=${FTP_REMOTE_PATH:-/}
+      - FTP_PRODUCT_XML_FILENAME=${FTP_PRODUCT_XML_FILENAME:-import0_1.xml}
+      - FTP_PRICE_XML_FILENAME=${FTP_PRICE_XML_FILENAME:-offers0_1.xml}
+      - PRODUCT_CATALOG_XML_DIR=${PRODUCT_CATALOG_XML_DIR:-/app/ftp_product_catalog_xml}
+      - PRICE_OFFERS_XML_DIR=${PRICE_OFFERS_XML_DIR:-/app/ftp_price_offers_xml}
+      - PRODUCT_IMAGES_DIR=${PRODUCT_IMAGES_DIR:-/app/ftp_product_images}
+      - PROCESSED_PRODUCT_XML_DIR=${PROCESSED_PRODUCT_XML_DIR:-/app/data/processed_feeds/product_catalog_xml}
+      - PROCESSED_PRICE_XML_DIR=${PROCESSED_PRICE_XML_DIR:-/app/data/processed_feeds/price_offers_xml}
+      # webdata — единственный источник данных, монтируется только на чтение,
+      # поэтому архивацию (перемещение исходников) отключаем.
+      - ARCHIVE_SOURCE_FILES=${ARCHIVE_SOURCE_FILES:-false}
+      - LOGS_DIR=${LOGS_DIR:-/app/data/logs}
+      - SYNC_LOCK_FILE=${SYNC_LOCK_FILE:-/app/data/sync/catalog_sync.lock}
+    volumes:
+      - ./ART_COMPL-BACKEND/data:/app/data
+      # Каталог, цены и фото читаются напрямую из webdata (новые выгрузки 1С
+      # достаточно положить сюда). import0_1.xml и offers0_1.xml лежат рядом,
+      # фото — в подпапке import_files.
+      - ./webdata:/app/ftp_product_catalog_xml:ro
+      - ./webdata:/app/ftp_price_offers_xml:ro
+      - ./webdata/import_files:/app/ftp_product_images:ro
+      - ./FRONT:/app/static:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: artcomplect
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d artcomplect"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
