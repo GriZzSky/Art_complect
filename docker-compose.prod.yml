@@ -43,6 +43,9 @@ services:
       - ./webdata:/app/ftp_price_offers_xml:ro
       - ./webdata/import_files:/app/ftp_product_images:ro
       - ./FRONT:/app/static:ro
+      # Исходники витрины ЛДСП/ЛМДФ/Кромка — нужны только скрипту
+      # scripts/seed_ldsp_lmdf_manual.py, который заводит эти товары в БД.
+      - ./ЛДСП_ЛМДФ_Кромка:/app/ldsp_source:ro
     depends_on:
       db:
         condition: service_healthy
