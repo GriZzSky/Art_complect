@@ -50,6 +50,9 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 SIZE_RE = re.compile(r"(\d{3,4})\s*[×xXх]\s*(\d{3,4})\s*[×xXх]\s*(\d{1,3})(?:\s*мм)?")
 PRICE_RE = re.compile(r"\(\s*([\d\s]+(?:[.,]\d+)?)\s*р\.?\s*\)")
+# «(Цена по запросу)» вместо суммы: цену не знаем, но и в названии декора этой
+# пометке не место — фронт сам подставит «Цена по запросу», когда price пустая.
+PRICE_ON_REQUEST_RE = re.compile(r"\(\s*цена\s+по\s+запросу\s*\)", re.IGNORECASE)
 
 
 @dataclass
@@ -70,12 +73,15 @@ class ParsedItem:
 def parse_filename(stem: str) -> tuple[str | None, float | None, str]:
     price_match = PRICE_RE.search(stem)
     size_match = SIZE_RE.search(stem)
+    on_request_match = PRICE_ON_REQUEST_RE.search(stem)
 
     spans = []
     if price_match:
         spans.append((price_match.start(), price_match.end()))
     if size_match:
         spans.append((size_match.start(), size_match.end()))
+    if on_request_match:
+        spans.append((on_request_match.start(), on_request_match.end()))
     spans.sort(key=lambda span: span[0], reverse=True)
 
     name = stem

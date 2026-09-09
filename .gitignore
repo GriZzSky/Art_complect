@@ -15,3 +15,7 @@ ART_COMPL-BACKEND/data/imports/*
 # OS
 Thumbs.db
 .DS_Store
+
+# Боевые секреты (пароль FTP, email Let's Encrypt) — только на сервере.
+# Шаблон deploy/.env.prod.example в git остаётся, сам файл — нет.
+deploy/.env.prod

@@ -51,6 +51,32 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # FTP-приёмник выгрузок 1С из магазина. Пишет прямо в ./webdata — ту же
+  # папку, откуда api читает каталог, цены и фото (у api она примонтирована
+  # только на чтение, конфликта нет).
+  #
+  # ВНИМАНИЕ: опубликованные Docker'ом порты проходят мимо ufw — ограничение
+  # доступа по IP делается в цепочке DOCKER-USER, см. deploy/FTP.md.
+  #
+  # Не путать с переменными FTP_* у сервиса api: те настраивают FTP-клиент,
+  # которым бэкенд сам ходит на чужой сервер. Здесь — наш собственный сервер.
+  ftp:
+    image: delfer/alpine-ftp-server
+    ports:
+      - "21:21"
+      - "21000-21010:21000-21010"
+    environment:
+      # ADDRESS — публичный IP VPS. vsftpd называет его клиенту в ответе на
+      # PASV; без него 1С не сможет открыть канал передачи данных.
+      - ADDRESS=${SERVER_PUBLIC_IP}
+      - MIN_PORT=21000
+      - MAX_PORT=21010
+      # Формат: логин|пароль|домашняя папка|uid|gid
+      - "USERS=${FTP_LOGIN}|${FTP_PASSWORD}|/ftp/webdata|1000|1000"
+    volumes:
+      - ./webdata:/ftp/webdata
+    restart: unless-stopped
+
   db:
     image: postgres:16-alpine
     environment:
