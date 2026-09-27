@@ -76,6 +76,14 @@ app.include_router(catalog_sync.router, prefix="/api")
 
 settings = get_settings()
 product_images_dir = get_product_images_dir()
+# Хранилище может ещё не существовать — например, при первом запуске после
+# переезда на накопительный каталог. Создаём заранее: если папки нет в момент
+# старта, маршрут не регистрируется, и все фото отдают 404 до перезапуска,
+# даже когда файлы уже появились.
+try:
+    product_images_dir.mkdir(parents=True, exist_ok=True)
+except OSError as exc:
+    logger.warning("Could not create product images directory %s: %s", product_images_dir, exc)
 if product_images_dir.exists():
     app.mount(PRODUCT_IMAGES_ROUTE_PREFIX, StaticFiles(directory=str(product_images_dir)), name="product-images")
 else:

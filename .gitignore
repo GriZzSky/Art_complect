@@ -8,6 +8,10 @@ ART_COMPL-BACKEND/data/sync/*.lock
 ART_COMPL-BACKEND/data/processed_feeds/**/*.xml
 ART_COMPL-BACKEND/data/imports/*
 
+# Постоянное хранилище фото товаров: накапливается из выгрузок 1С,
+# десятки мегабайт, живёт только на сервере.
+ART_COMPL-BACKEND/data/product_images/
+
 # Выгрузка 1С (CommerceML): ~159 МБ, поступает регулярно.
 # На сервер заливается отдельно (rsync/scp), в git не хранится.
 /webdata/

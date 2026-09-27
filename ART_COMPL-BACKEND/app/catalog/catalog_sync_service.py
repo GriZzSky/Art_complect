@@ -4,7 +4,7 @@ from pathlib import Path
 
 from app.catalog.price_feed_parser import parse_offers_map
 from app.catalog.product_feed_parser import parse_products_list
-from app.catalog.product_image_registry import refresh_image_index
+from app.catalog.product_image_registry import merge_incoming_images, refresh_image_index
 from app.catalog.product_repository import archive_file, bulk_upsert, deactivate_all
 from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal
@@ -170,6 +170,7 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
         "upserted": 0,
         "price_feed_parsed": 0,
         "price_feed_applied": 0,
+        "images_copied": 0,
     }
     if not _acquire_lock():
         result["message"] = "Failed to acquire sync lock"
@@ -227,11 +228,14 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
             if price_offers_path is not None and _should_archive_source(price_offers_path, price_upload_dir, price_archive_dir):
                 archive_file(price_offers_path, price_archive_dir)
 
+        # Фото докладываем в хранилище до пересборки индекса, иначе новые
+        # картинки не попадут в него до следующей синхронизации.
+        result["images_copied"], _ = merge_incoming_images()
         refresh_image_index()
         result["success"] = True
         result["message"] = (
             f"Catalog sync: {result['upserted']} products, price and stock updated for "
-            f"{result['price_feed_applied']}"
+            f"{result['price_feed_applied']}, images added {result['images_copied']}"
         )
     except Exception as exc:
         result["message"] = str(exc)

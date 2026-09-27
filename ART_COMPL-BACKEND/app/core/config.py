@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     PRODUCT_CATALOG_XML_DIR: str = "../ftp_product_catalog_xml"
     PRICE_OFFERS_XML_DIR: str = "../ftp_price_offers_xml"
     PRODUCT_IMAGES_DIR: str = "../ftp_product_images"
+    # Папка, куда 1С заливает фото. Присылают пачками: там лежит только
+    # последняя выгрузка, поэтому раздавать сайт прямо оттуда нельзя — фото
+    # накапливаются в PRODUCT_IMAGES_DIR (см. merge_incoming_images).
+    # По умолчанию совпадает с ним: в dev-окружении накопление не нужно.
+    PRODUCT_IMAGES_INCOMING_DIR: str = "../ftp_product_images"
 
     # Внутренние архивы обработанных XML.
     PROCESSED_PRODUCT_XML_DIR: str = "data/processed_feeds/product_catalog_xml"

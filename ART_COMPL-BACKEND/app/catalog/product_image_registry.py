@@ -1,7 +1,9 @@
+import shutil
 from functools import lru_cache
 from pathlib import Path
 
 from app.core.config import get_settings
+from app.utils.logger import logger
 
 PRODUCT_IMAGES_ROUTE_PREFIX = "/product-images"
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -30,7 +32,57 @@ def refresh_image_index() -> None:
 
 
 def get_product_images_dir() -> Path:
+    """Постоянное хранилище фото — отсюда их раздаёт сайт."""
     return Path(get_settings().PRODUCT_IMAGES_DIR)
+
+
+def get_incoming_images_dir() -> Path:
+    """Папка, куда 1С заливает очередную пачку фото."""
+    return Path(get_settings().PRODUCT_IMAGES_INCOMING_DIR)
+
+
+def merge_incoming_images() -> tuple[int, int]:
+    """Докладывает фото из входящей папки в постоянное хранилище.
+
+    1С присылает выгрузки пачками — во входящей папке лежит только то, что
+    залили в последний раз. Раньше сайт раздавал картинки прямо оттуда, и
+    каждая новая пачка «стирала» все предыдущие фото. Здесь файлы копятся:
+    пришло 50 новых — в хранилище стало на 50 больше, старые на месте.
+    Удаления нет вообще: пропажа файла во входящей папке не должна уносить
+    фото с витрины.
+
+    Возвращает (скопировано, не изменилось).
+    """
+    incoming = get_incoming_images_dir()
+    store = get_product_images_dir()
+
+    if incoming.resolve() == store.resolve():
+        # Хранилище не выделено (dev-окружение) — копировать некуда и незачем.
+        return 0, 0
+    if not incoming.exists():
+        logger.warning("Incoming images directory was not found: %s", incoming)
+        return 0, 0
+
+    store.mkdir(parents=True, exist_ok=True)
+    copied = unchanged = 0
+    for source in incoming.rglob("*"):
+        if not source.is_file() or source.suffix.lower() not in IMAGE_EXTENSIONS:
+            continue
+        target = store / source.relative_to(incoming)
+        if target.exists():
+            source_stat, target_stat = source.stat(), target.stat()
+            # Тот же файл: размер совпал и копия не старше источника. Сравнение
+            # работает только потому, что копируем через copy2 — она сохраняет
+            # время изменения, иначе каждая синхронизация переписывала бы всё.
+            if source_stat.st_size == target_stat.st_size and target_stat.st_mtime >= source_stat.st_mtime:
+                unchanged += 1
+                continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        copied += 1
+
+    logger.info("Product images merged: %d copied, %d unchanged", copied, unchanged)
+    return copied, unchanged
 
 
 def get_product_image_url(external_id: str | None) -> str | None:

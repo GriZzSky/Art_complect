@@ -26,7 +26,11 @@ services:
       - FTP_PRICE_XML_FILENAME=${FTP_PRICE_XML_FILENAME:-offers0_1.xml}
       - PRODUCT_CATALOG_XML_DIR=${PRODUCT_CATALOG_XML_DIR:-/app/ftp_product_catalog_xml}
       - PRICE_OFFERS_XML_DIR=${PRICE_OFFERS_XML_DIR:-/app/ftp_price_offers_xml}
-      - PRODUCT_IMAGES_DIR=${PRODUCT_IMAGES_DIR:-/app/ftp_product_images}
+      # Постоянное хранилище фото на записываемом томе data — отсюда их раздаёт
+      # сайт. Входящая папка от 1С содержит только последнюю пачку, поэтому
+      # синхронизация докладывает её сюда, ничего не удаляя.
+      - PRODUCT_IMAGES_DIR=${PRODUCT_IMAGES_DIR:-/app/data/product_images}
+      - PRODUCT_IMAGES_INCOMING_DIR=${PRODUCT_IMAGES_INCOMING_DIR:-/app/ftp_product_images}
       - PROCESSED_PRODUCT_XML_DIR=${PROCESSED_PRODUCT_XML_DIR:-/app/data/processed_feeds/product_catalog_xml}
       - PROCESSED_PRICE_XML_DIR=${PROCESSED_PRICE_XML_DIR:-/app/data/processed_feeds/price_offers_xml}
       # webdata — единственный источник данных, монтируется только на чтение,
