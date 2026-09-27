@@ -16,6 +16,12 @@ ART_COMPL-BACKEND/data/product_images/
 # На сервер заливается отдельно (rsync/scp), в git не хранится.
 /webdata/
 
+# Логи, если скрипт запускали из корня проекта, а не из ART_COMPL-BACKEND.
+/data/
+
+# Архивы QR-карточек: сами карточки лежат в Qr-коды/, zip — под раздачу.
+*.zip
+
 # OS
 Thumbs.db
 .DS_Store
