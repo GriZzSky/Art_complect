@@ -16,6 +16,13 @@ const CATALOG_PAGE_SIZE = 12;
 // вместо обычной сетки (см. LdspLmdfStepper ниже). Slug совпадает с бэкендом
 // (app/catalog/product_repository.py, LDSP_LMDF_KROMKA_CATEGORY_SLUG).
 const LDSP_LMDF_KROMKA_SLUG = 'ldsp-lmdf-kromka';
+// Почта для заказов и вопросов с сайта. Держим в одном месте: адрес был
+// продублирован по всем страницам, и в одной из копий первая буква оказалась
+// кириллической «А» — ссылка молча вела в никуда.
+const ORDER_EMAIL = 'artcom_yarik@mail.ru';
+// Практический потолок длины mailto:. За ним часть почтовых клиентов молча
+// обрезает письмо, поэтому длинный заказ укорачиваем сами и пишем об этом.
+const MAILTO_MAX_LENGTH = 1800;
 
 // ==========================================
 // 1. КОРЗИНА (Cart Management)
@@ -157,6 +164,11 @@ class ShoppingCart {
             if (!modalEl.dataset.bound) {
                 const closeBtn = modalEl.querySelector('.modal-close');
                 const cancelBtn = modalEl.querySelector('.checkout-cancel-btn');
+                const emailBtn = modalEl.querySelector('.checkout-email-btn');
+
+                if (emailBtn) {
+                    emailBtn.addEventListener('click', () => this.sendOrderByEmail());
+                }
 
                 if (closeBtn) {
                     closeBtn.addEventListener('click', () => this.closeCheckoutModal());
@@ -220,6 +232,74 @@ class ShoppingCart {
         }
 
         this.openCheckoutModal();
+    }
+
+    buildOrderLetter(itemsShown, omittedCount) {
+        const lines = ['Здравствуйте!', '', 'Хочу оформить заказ:', ''];
+
+        itemsShown.forEach((item, index) => {
+            const hasPrice = item.price && item.price > 0;
+            // Одной строкой на позицию: кириллица в mailto кодируется шестью
+            // символами на букву, и трёхстрочный формат упирался в лимит длины
+            // уже на пятой позиции — для оптового заказа этого мало.
+            const amount = hasPrice
+                ? `${item.quantity} шт. x ${formatMoney(item.price)} = ${formatMoney(item.price * item.quantity)}`
+                : `${item.quantity} шт., цена по запросу`;
+            lines.push(`${index + 1}. [${item.id}] ${item.name} — ${amount}`);
+        });
+
+        if (omittedCount > 0) {
+            lines.push('', `Ещё ${omittedCount} поз. — полный список скопирован в буфер обмена,`);
+            lines.push('вставьте его сюда сочетанием Ctrl+V.');
+        }
+
+        const total = this.getTotal();
+        const hasRequestPrice = this.items.some(item => !item.price || item.price <= 0);
+        const totalLabel = total > 0
+            ? formatMoney(total) + (hasRequestPrice ? ' + позиции по запросу' : '')
+            : 'по запросу';
+
+        lines.push('', `Итого: ${totalLabel}`);
+        lines.push('', 'Имя:', 'Телефон:', 'Комментарий:', '');
+
+        return lines.join('\r\n');
+    }
+
+    sendOrderByEmail() {
+        if (this.items.length === 0) {
+            alert('Корзина пуста!');
+            return;
+        }
+
+        const subject = `Заказ с сайта art-komplekt.shop, позиций: ${this.items.length}`;
+        // encodeURIComponent кодирует кириллицу в UTF-8 процентами — без этого
+        // почтовый клиент показывает тему и текст письма иероглифами.
+        const makeHref = (count) => {
+            const body = this.buildOrderLetter(this.items.slice(0, count), this.items.length - count);
+            return `mailto:${ORDER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        };
+
+        let shown = this.items.length;
+        let href = makeHref(shown);
+        while (href.length > MAILTO_MAX_LENGTH && shown > 0) {
+            shown -= 1;
+            href = makeHref(shown);
+        }
+
+        // Кириллица кодируется шестью символами на букву, поэтому оптовый заказ
+        // в ссылку физически не влезает — при лимите в 1800 символов это две-три
+        // позиции с типичными для каталога длинными названиями. Полный список
+        // всегда кладём в буфер обмена: покупателю остаётся вставить его в
+        // письмо, а менеджер получает заказ целиком, а не огрызок.
+        if (shown < this.items.length && navigator.clipboard) {
+            navigator.clipboard
+                .writeText(this.buildOrderLetter(this.items, 0))
+                .then(() => this.showNotification('Полный список заказа скопирован — вставьте его в письмо (Ctrl+V)'))
+                .catch(() => this.showNotification('Список заказа не поместился в письмо целиком — допишите позиции вручную'));
+        }
+
+        window.location.href = href;
+        this.closeCheckoutModal();
     }
 
     showNotification(message) {
