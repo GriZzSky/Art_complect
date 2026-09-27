@@ -44,7 +44,7 @@ services:
       - ./webdata/import_files:/app/ftp_product_images:ro
       - ./FRONT:/app/static:ro
       # Исходники витрины ЛДСП/ЛМДФ/Кромка — нужны только скрипту
-      # scripts/seed_ldsp_lmdf_manual.py, который заводит эти товары в БД.
+      # scripts/seed_ldsp_lmdf_manual.py, который заводит эти товары в БД. 
       - ./ЛДСП_ЛМДФ_Кромка:/app/ldsp_source:ro
     depends_on:
       db:
@@ -72,7 +72,9 @@ services:
       - MIN_PORT=21000
       - MAX_PORT=21010
       # Формат: логин|пароль|домашняя папка|uid|gid
-      - "USERS=${FTP_LOGIN}|${FTP_PASSWORD}|/ftp/webdata|1000|1000"
+      # Префикс FTP_SERVER_ намеренно отличается от FTP_* у сервиса api:
+      # те настраивают исходящий FTP-клиент бэкенда, это — входящий сервер.
+      - "USERS=${FTP_SERVER_LOGIN}|${FTP_SERVER_PASSWORD}|/ftp/webdata|1000|1000"
     volumes:
       - ./webdata:/ftp/webdata
     restart: unless-stopped

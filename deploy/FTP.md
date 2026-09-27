@@ -1,7 +1,8 @@
 # FTP-приёмник выгрузок 1С
 
 Магазин выгружает CommerceML прямо на VPS, в папку `webdata`, откуда бэкенд
-уже читает каталог, цены и фото. Доступ разрешён только с IP магазина.
+уже читает каталог, цены и фото. Подключаться могут только два адреса:
+магазин и администратор.
 
 Сервис `ftp` описан в `docker-compose.prod.yml`. Здесь — то, что делается
 руками на сервере.
@@ -19,8 +20,8 @@ nano deploy/.env.prod
 
 ```
 SERVER_PUBLIC_IP=<IP из curl выше>
-FTP_LOGIN=1c_upload
-FTP_PASSWORD=<сгенерированный пароль>
+FTP_SERVER_LOGIN=1c_upload
+FTP_SERVER_PASSWORD=<сгенерированный пароль>
 ```
 
 Пароль — **только буквы и цифры**. Символ `|` разделяет поля в переменной
@@ -57,13 +58,18 @@ iptables напрямую, и трафик к контейнерам не про
 при этом останется открыт всему интернету.
 
 Ограничение ставится в цепочке `DOCKER-USER` — её Docker просматривает раньше
-собственных правил:
+собственных правил. Адресов у нас два (магазин и администратор), причём
+администраторский меняется, поэтому держим их в отдельном списке `ipset`:
+правило в iptables пишется один раз, а адреса потом добавляются одной командой.
 
 ```bash
-# разрешить магазину
-iptables -I DOCKER-USER -p tcp -m multiport --dports 21,21000:21010 \
-  -s 158.46.15.2 -j RETURN
-# всем остальным — запретить
+apt-get install -y ipset ipset-persistent
+
+ipset create ftp_allow hash:ip timeout 0
+ipset add ftp_allow 158.46.15.2                        # магазин, бессрочно
+ipset add ftp_allow <ВАШ_IP> timeout 604800            # администратор, на неделю
+
+iptables -I DOCKER-USER -p tcp -m multiport --dports 21,21000:21010 -m set --match-set ftp_allow src -j RETURN
 iptables -I DOCKER-USER 2 -p tcp -m multiport --dports 21,21000:21010 -j DROP
 ```
 
@@ -71,14 +77,28 @@ iptables -I DOCKER-USER 2 -p tcp -m multiport --dports 21,21000:21010 -j DROP
 
 ```bash
 iptables -L DOCKER-USER -n --line-numbers -v
+ipset list ftp_allow
 ```
+
+Когда ваш адрес сменится — зайти по SSH и добавить текущий одной командой,
+`$SSH_CLIENT` содержит именно тот адрес, с которого пришло подключение:
+
+```bash
+ipset add ftp_allow "$(echo $SSH_CLIENT | awk '{print $1}')" timeout 604800
+```
+
+Недельный таймаут нужен, чтобы список не зарастал старыми адресами: запись
+администратора протухает сама, а адрес магазина остаётся.
 
 Сохранить, чтобы пережило перезагрузку:
 
 ```bash
-DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
 netfilter-persistent save
 ```
+
+Пакет `ipset-persistent` добавляет к `netfilter-persistent` плагин, который
+сохраняет и сами списки. После первой перезагрузки стоит проверить, что
+`ipset list ftp_allow` не пустой.
 
 ## 5. Доступ по SSH со своего IP
 
