@@ -41,6 +41,13 @@ def get_product_image_url(external_id: str | None) -> str | None:
     relative_path = _build_image_index().get(product_key)
     if not relative_path:
         return None
+    # Индекс кэшируется в памяти процесса и не знает, что файл мог исчезнуть
+    # после его построения — например, когда 1С перезалила выгрузку без части
+    # фотографий. Без этой проверки страница получает ссылку на удалённый файл:
+    # вместо честного плейсхолдера «Нет изображения» браузер ловит 404.
+    # get_product_image_url_from_ref такую проверку делает, здесь её не хватало.
+    if not (get_product_images_dir() / relative_path).is_file():
+        return None
     return f"{PRODUCT_IMAGES_ROUTE_PREFIX}/{relative_path}"
 
 
