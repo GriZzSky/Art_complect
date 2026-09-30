@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from app.catalog.price_feed_parser import parse_offers_map
-from app.catalog.product_feed_parser import parse_products_list
+from app.catalog.product_feed_parser import catalog_contains_only_changes, parse_products_list
 from app.catalog.product_image_registry import merge_incoming_images, refresh_image_index
 from app.catalog.product_repository import archive_file, bulk_upsert, deactivate_all
 from app.core.config import get_settings
@@ -196,6 +196,7 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
                 return result
             price_offers_path = _resolve_price_offers_path(product_catalog_path)
 
+        contains_only_changes = catalog_contains_only_changes(product_catalog_path)
         products = parse_products_list(product_catalog_path)
         result["parsed"] = len(products)
         if not products:
@@ -212,7 +213,12 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
         async with AsyncSessionLocal() as session:
             await session.begin()
             try:
-                await deactivate_all(session)
+                if contains_only_changes:
+                    logger.info(
+                        "Incremental product feed detected; existing products remain active"
+                    )
+                else:
+                    await deactivate_all(session)
                 result["upserted"], result["price_feed_applied"] = await bulk_upsert(
                     session, products, offers_by_id
                 )
