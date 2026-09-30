@@ -26,7 +26,7 @@ REQ_FULL_NAME = "Полное наименование"
 # самой папки с фото (PRODUCT_IMAGES_DIR), убираем его, чтобы получить путь
 # относительно неё же.
 PICTURE_DIR_PREFIX = "import_files/"
-
+CONTAINS_ONLY_CHANGES_ATTRIBUTE = "СодержитТолькоИзменения"
 
 @dataclass
 class ParsedProduct:
@@ -46,6 +46,21 @@ class ParsedProduct:
 
 def _text(element: ET.Element | None) -> str:
     return (element.text or "").strip() if element is not None else ""
+    
+def catalog_contains_only_changes(xml_path: Path) -> bool:
+    """Возвращает признак частичной выгрузки CommerceML.
+
+    При ``СодержитТолькоИзменения=\"true\"`` XML содержит только изменившиеся
+    товары. Перед такой загрузкой нельзя деактивировать весь существующий
+    каталог: отсутствующие в файле товары не удалены, они просто не менялись.
+    """
+    root = parse_commerceml_root(xml_path)
+    catalog = root.find(tag_path(TAG_CATALOG), NS)
+    if catalog is None:
+        return False
+    value = catalog.attrib.get(CONTAINS_ONLY_CHANGES_ATTRIBUTE, "")
+    return value.strip().lower() in {"true", "1", "yes"}
+
 
 
 def _find_requisite(product_element: ET.Element, name: str) -> str | None:
