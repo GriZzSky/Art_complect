@@ -1,4 +1,5 @@
 """Catalog synchronization from FTP/upload folders into the product database."""
+import re
 import time
 from pathlib import Path
 
@@ -16,6 +17,11 @@ from app.utils.logger import logger
 
 LEGACY_PRODUCT_FILENAME = "import0_1.xml"
 LEGACY_PRICE_FILENAME = "offers0_1.xml"
+# Части одной выгрузки 1С приходят подряд за несколько минут. Файлы от
+# предыдущей выгрузки с большим номером могут остаться в webdata, поэтому
+# нельзя безусловно брать весь glob import0_*.xml / offers0_*.xml.
+SPLIT_FEED_MAX_AGE_BEFORE_FIRST_SEC = 6 * 60 * 60
+SPLIT_FEED_NAME_RE = re.compile(r"^(?P<prefix>.+_)(?P<part>\d+)(?P<suffix>\.xml)$", re.IGNORECASE)
 
 
 def _backend_root() -> Path:
@@ -97,6 +103,41 @@ def _sorted_xml_files(directory: Path, pattern: str = "*.xml") -> list[Path]:
     )
 
 
+def _resolve_split_feed_paths(first_path: Path) -> list[Path]:
+    """Собирает последовательные актуальные части выгрузки ``*_1.xml``.
+
+    1С разбивает большой каталог на import0_1.xml, import0_2.xml и т.д.
+    Первый файл полной выгрузки имеет ``СодержитТолькоИзменения=false``, а
+    продолжения — ``true``. Старые хвосты не удаляются автоматически: например,
+    после новой выгрузки из 11 частей может остаться прошлый ``*_12.xml``.
+    Отсекаем такой хвост по времени относительно первой части.
+    """
+    match = SPLIT_FEED_NAME_RE.match(first_path.name)
+    if match is None or int(match.group("part")) != 1:
+        return [first_path]
+
+    first_mtime = first_path.stat().st_mtime
+    paths: list[Path] = []
+    part = 1
+    while True:
+        candidate = first_path.with_name(
+            f'{match.group("prefix")}{part}{match.group("suffix")}'
+        )
+        if not candidate.is_file():
+            break
+        if (
+            part > 1
+            and candidate.stat().st_mtime
+            < first_mtime - SPLIT_FEED_MAX_AGE_BEFORE_FIRST_SEC
+        ):
+            logger.info("Ignoring stale split feed tail starting at %s", candidate)
+            break
+        paths.append(candidate)
+        part += 1
+
+    return paths or [first_path]
+
+
 def _resolve_product_catalog_path(xml_path: Path | None = None) -> Path | None:
     settings = get_settings()
     upload_dir = Path(settings.PRODUCT_CATALOG_XML_DIR)
@@ -123,6 +164,11 @@ def _resolve_product_catalog_path(xml_path: Path | None = None) -> Path | None:
 
     existing = _iter_existing_files(candidates)
     return existing[0] if existing else None
+
+
+def _resolve_product_catalog_paths(xml_path: Path | None = None) -> list[Path]:
+    first_path = _resolve_product_catalog_path(xml_path)
+    return _resolve_split_feed_paths(first_path) if first_path is not None else []
 
 
 def _resolve_price_offers_path(product_catalog_path: Path | None = None) -> Path | None:
@@ -152,6 +198,11 @@ def _resolve_price_offers_path(product_catalog_path: Path | None = None) -> Path
     return existing[0] if existing else None
 
 
+def _resolve_price_offers_paths(product_catalog_path: Path | None = None) -> list[Path]:
+    first_path = _resolve_price_offers_path(product_catalog_path)
+    return _resolve_split_feed_paths(first_path) if first_path is not None else []
+
+
 def _should_archive_source(source_path: Path, upload_dir: Path, archive_dir: Path) -> bool:
     try:
         source = source_path.resolve()
@@ -171,6 +222,8 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
         "price_feed_parsed": 0,
         "price_feed_applied": 0,
         "images_copied": 0,
+        "product_feed_files": 0,
+        "price_feed_files": 0,
     }
     if not _acquire_lock():
         result["message"] = "Failed to acquire sync lock"
@@ -189,23 +242,50 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
                 result["message"] = "FTP error: product catalog XML was not downloaded"
                 return result
             price_offers_path = download_price_offers_xml_from_ftp(price_upload_dir)
+            product_catalog_paths = _resolve_split_feed_paths(product_catalog_path)
+            price_offers_paths = (
+                _resolve_split_feed_paths(price_offers_path)
+                if price_offers_path is not None
+                else []
+            )
         else:
-            product_catalog_path = _resolve_product_catalog_path(xml_path)
-            if product_catalog_path is None:
+            product_catalog_paths = _resolve_product_catalog_paths(xml_path)
+            if not product_catalog_paths:
                 result["message"] = "Product catalog XML was not found"
                 return result
-            price_offers_path = _resolve_price_offers_path(product_catalog_path)
+            price_offers_paths = _resolve_price_offers_paths(product_catalog_paths[0])
 
-        contains_only_changes = catalog_contains_only_changes(product_catalog_path)
-        products = parse_products_list(product_catalog_path)
+        result["product_feed_files"] = len(product_catalog_paths)
+        result["price_feed_files"] = len(price_offers_paths)
+        logger.info(
+            "Catalog feed parts: products=%s, offers=%s",
+            [path.name for path in product_catalog_paths],
+            [path.name for path in price_offers_paths],
+        )
+
+        # Полная выгрузка 1С: первая часть имеет false, остальные части — true.
+        # Только если ВСЕ части помечены как изменения, это инкрементальная пачка
+        # и отсутствующие в ней товары должны остаться активными.
+        contains_only_changes = all(
+            catalog_contains_only_changes(path) for path in product_catalog_paths
+        )
+        products_by_id = {}
+        for path in product_catalog_paths:
+            for product in parse_products_list(path):
+                products_by_id[product.external_id] = product
+        products = list(products_by_id.values())
         result["parsed"] = len(products)
         if not products:
-            result["message"] = f"Product catalog XML did not pass validation: {product_catalog_path}"
+            result["message"] = (
+                "Product catalog XML did not pass validation: "
+                f"{', '.join(str(path) for path in product_catalog_paths)}"
+            )
             return result
 
         offers_by_id = {}
-        if price_offers_path is not None and price_offers_path.exists():
-            offers_by_id = parse_offers_map(price_offers_path)
+        if price_offers_paths:
+            for path in price_offers_paths:
+                offers_by_id.update(parse_offers_map(path))
             result["price_feed_parsed"] = len(offers_by_id)
         else:
             logger.warning("Price XML not found; current prices and stock values will be kept")
@@ -229,10 +309,12 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
                 return result
 
         if settings.ARCHIVE_SOURCE_FILES:
-            if _should_archive_source(product_catalog_path, product_upload_dir, product_archive_dir):
-                archive_file(product_catalog_path, product_archive_dir)
-            if price_offers_path is not None and _should_archive_source(price_offers_path, price_upload_dir, price_archive_dir):
-                archive_file(price_offers_path, price_archive_dir)
+            for product_catalog_path in product_catalog_paths:
+                if _should_archive_source(product_catalog_path, product_upload_dir, product_archive_dir):
+                    archive_file(product_catalog_path, product_archive_dir)
+            for price_offers_path in price_offers_paths:
+                if _should_archive_source(price_offers_path, price_upload_dir, price_archive_dir):
+                    archive_file(price_offers_path, price_archive_dir)
 
         # Фото докладываем в хранилище до пересборки индекса, иначе новые
         # картинки не попадут в него до следующей синхронизации.
@@ -240,8 +322,10 @@ async def run_sync(download_from_ftp: bool = True, xml_path: Path | None = None)
         refresh_image_index()
         result["success"] = True
         result["message"] = (
-            f"Catalog sync: {result['upserted']} products, price and stock updated for "
-            f"{result['price_feed_applied']}, images added {result['images_copied']}"
+            f"Catalog sync: {result['upserted']} products from "
+            f"{result['product_feed_files']} files, price and stock updated for "
+            f"{result['price_feed_applied']} from {result['price_feed_files']} files, "
+            f"images added {result['images_copied']}"
         )
     except Exception as exc:
         result["message"] = str(exc)
